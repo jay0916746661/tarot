@@ -29,41 +29,10 @@ function HomeView({ onNav }) {
             <button className="btn-ghost" onClick={() => onNav('daily')}>今日之牌</button>
             <span className="home-actions-meta">{time} · TPE</span>
           </div>
-
-          <div className="home-stats">
-            <div className="home-stat"><div className="home-stat-num">78</div><div className="home-stat-label">CARDS</div><div className="home-stat-tc">完整牌庫</div></div>
-            <div className="home-stat"><div className="home-stat-num">06</div><div className="home-stat-label">SPREADS</div><div className="home-stat-tc">經典牌陣</div></div>
-            <div className="home-stat"><div className="home-stat-num">24</div><div className="home-stat-label">SESSIONS</div><div className="home-stat-tc">本月占卜</div></div>
-            <div className="home-stat"><div className="home-stat-num">∞</div><div className="home-stat-label">INSIGHTS</div><div className="home-stat-tc">無盡啟示</div></div>
-          </div>
         </div>
-
         <div className="home-altar">
-          <div className="home-altar-compass">
-            <AstroCompass size={520} opacity={0.35} />
-          </div>
-          <div className="home-altar-card">
-            {feature && <TarotCard card={feature} reversed={feature.isReversed} size="xl" />}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ marginTop: 80 }}>
-        <Eyebrow>本月召喚 · THIS MOON CYCLE</Eyebrow>
-        <div style={{ marginTop: 32, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: 'var(--line-dim)', border: '1px solid var(--line-dim)' }}>
-          {[
-            { tc: '提問之術', en: 'The Art of Asking', body: '一個好問題比答案珍貴。學習如何向牌堆發問。', tag: 'GUIDE' },
-            { tc: '逆位之意', en: 'On Reversals', body: '逆位不是壞牌——它是同一能量的內向版本。', tag: 'STUDY' },
-            { tc: '元素對話', en: 'Elemental Dialog', body: '火、水、風、土在你的牌陣中如何對話？', tag: 'DEEP' },
-          ].map((it, i) => (
-            <div key={i} style={{ background: 'var(--midnight)', padding: 32, cursor: 'pointer' }} onClick={() => onNav('codex')}>
-              <Eyebrow>{it.tag}</Eyebrow>
-              <div style={{ fontFamily: 'var(--tc)', fontSize: 24, marginTop: 16, letterSpacing: '0.1em', color: 'var(--parchment)' }}>{it.tc}</div>
-              <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 16, color: 'var(--gold)', marginTop: 4 }}>{it.en}</div>
-              <div style={{ fontFamily: 'var(--tc)', fontSize: 14, lineHeight: 1.8, color: 'var(--mist)', marginTop: 20 }}>{it.body}</div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--gold)', letterSpacing: '0.25em', marginTop: 32 }}>READ →</div>
-            </div>
-          ))}
+          <div className="home-altar-compass"><AstroCompass size={520} opacity={0.35} /></div>
+          <div className="home-altar-card">{feature && <TarotCard card={feature} reversed={feature.isReversed} size="xl" />}</div>
         </div>
       </div>
     </div>
@@ -71,91 +40,53 @@ function HomeView({ onNav }) {
 }
 
 // ───────────────────── SPREADS ─────────────────────
-function SpreadMini({ layout, count }) {
-  const arrange = (() => {
-    if (layout === 'single') return [{ x: 0, y: 0 }];
-    if (layout === 'three') return [{ x: -32, y: 0 }, { x: 0, y: 0 }, { x: 32, y: 0 }];
-    if (layout === 'celtic') return [
-      { x: 0, y: 0 }, { x: 0, y: 0, rot: 90 }, { x: 0, y: 30 }, { x: -34, y: 0 }, { x: 0, y: -30 }, { x: 34, y: 0 },
-      { x: 60, y: 30 }, { x: 60, y: 10 }, { x: 60, y: -10 }, { x: 60, y: -30 },
-    ];
-    if (layout === 'relation') return [{ x: -50, y: 0 }, { x: 50, y: 0 }, { x: 0, y: -22 }, { x: 0, y: 0 }, { x: 0, y: 22 }];
-    if (layout === 'horseshoe') return [{ x: -56, y: 18 }, { x: -36, y: 0 }, { x: -16, y: -12 }, { x: 0, y: -16 }, { x: 16, y: -12 }, { x: 36, y: 0 }, { x: 56, y: 18 }];
-    return [];
-  })();
-  return (
-    <div className="spread-mini">
-      {arrange.map((p, i) => (<div key={i} className="mini-card" style={{ position: 'absolute', transform: `translate(${p.x}px, ${p.y}px) rotate(${p.rot || 0}deg)` }} />))}
-    </div>
-  );
-}
-
 function SpreadsView({ onNav, onSelectSpread }) {
   const [picked, setPicked] = uS(null);
   return (
     <div className="view-container fade-in">
       <header className="view-header">
-        <div><Eyebrow>02 · CHOOSE YOUR ARRAY</Eyebrow><h2 className="view-title-tc">擇 一 牌 陣</h2><div className="view-title-en">Six configurations of inquiry</div></div>
-        <div className="view-header-meta"><div>06 SPREADS AVAILABLE</div><div>FROM 1 → 10 CARDS</div></div>
+        <div><Eyebrow>02 · CHOOSE YOUR ARRAY</Eyebrow><h2 className="view-title-tc">擇 一 牌 陣</h2></div>
       </header>
-
       <div className="spreads-grid">
         {SPREADS.map((s, i) => (
           <div key={s.id} className={`spread-cell ${picked === s.id ? 'selected' : ''}`} onClick={() => setPicked(s.id)} onDoubleClick={() => { onSelectSpread(s); onNav('reading'); }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div className="spread-num">{String(i + 1).padStart(2, '0')} / 06</div>
-              <div className="spread-num" style={{ color: 'var(--mist)' }}>{'◆'.repeat(s.difficulty)}{'◇'.repeat(5 - s.difficulty)}</div>
-            </div>
-            <SpreadMini layout={s.layout} count={s.count} />
-            <div className="spread-cell-title">{s.name}</div><div className="spread-cell-en">{s.en}</div><p className="spread-cell-desc">{s.description}</p>
-            <div className="spread-cell-meta">
-              <span className="spread-cell-stat">{s.count} CARDS · {s.duration}</span>
-              {picked === s.id && (<button className="btn-ghost" onClick={(e) => { e.stopPropagation(); onSelectSpread(s); onNav('reading'); }}>選擇 →</button>)}
-            </div>
+            <div className="spread-cell-title">{s.name}</div>
+            <p className="spread-cell-desc">{s.description}</p>
+            <button className="btn-ghost" onClick={() => { onSelectSpread(s); onNav('reading'); }}>選擇 →</button>
           </div>
         ))}
       </div>
-      <div style={{ marginTop: 40, fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.25em', color: 'var(--mist)', textAlign: 'center', textTransform: 'uppercase' }}>TIP · 點擊選擇 · 雙擊直接開始</div>
     </div>
   );
 }
 
-// ───────────────────── READING (流程) ─────────────────────
+// ───────────────────── READING ─────────────────────
 function ReadingView({ spread, onComplete, onNav }) {
-  const [step, setStep] = uS(spread ? 'question' : 'no-spread');
+  const [step, setStep] = uS('question');
   const [question, setQuestion] = uS('');
   const [drawn, setDrawn] = uS([]);
   const [picked, setPicked] = uS([]);
-  const [isFaceUpDraw, setIsFaceUpDraw] = uS(false); // 控制正面抽牌
-  const [drawMode, setDrawMode] = uS('random'); // 控制正逆位：random, upright, reversed
-  const fanCount = 22;
+  const [isFaceUpDraw, setIsFaceUpDraw] = uS(false);
+  const [drawMode, setDrawMode] = uS('random');
 
   uE(() => {
     if (step === 'shuffle') {
       const t = setTimeout(() => {
-        setDrawn(drawCards(fanCount, Date.now()));
+        setDrawn(drawCards(22, Date.now()));
         setStep('pick');
-      }, 3200);
+      }, 2000);
       return () => clearTimeout(t);
     }
   }, [step]);
 
-  if (!spread) return null;
-
-  const steps = [{ id: 'question', label: '提問', en: 'Inquire' }, { id: 'shuffle', label: '洗牌', en: 'Shuffle' }, { id: 'pick', label: '擇牌', en: 'Choose' }, { id: 'reveal', label: '揭曉', en: 'Reveal' }];
-  const stepIdx = steps.findIndex((s) => s.id === step);
-
   const togglePick = (idx) => {
-    if (picked.includes(idx)) {
-      setPicked(picked.filter((p) => p !== idx));
-    } else if (picked.length < spread.count) {
+    if (picked.length < spread.count && !picked.includes(idx)) {
       const next = [...picked, idx];
       setPicked(next);
       if (next.length === spread.count) {
         setTimeout(() => {
-          const finalCards = next.map((i) => {
-            const c = { ...drawn[i] };
-            // 套用抽牌時選定的正逆位設定
+          const finalCards = next.map(i => {
+            const c = {...drawn[i]};
             if (drawMode === 'upright') c.isReversed = false;
             else if (drawMode === 'reversed') c.isReversed = true;
             return c;
@@ -168,112 +99,21 @@ function ReadingView({ spread, onComplete, onNav }) {
 
   return (
     <div className="view-container fade-in">
-      <header className="view-header">
-        <div><Eyebrow>03 · THE RITUAL</Eyebrow><h2 className="view-title-tc">儀 式 進 行</h2><div className="view-title-en">{spread.name} · {spread.en}</div></div>
-        <div className="view-header-meta"><div>{spread.count} CARDS</div><div>{spread.duration}</div></div>
-      </header>
-
-      <div className="ritual-step-indicator">
-        {steps.map((s, i) => (
-          <div key={s.id} className={`ritual-step ${stepIdx === i ? 'active' : ''} ${stepIdx > i ? 'done' : ''}`}>
-            <span className="ritual-step-dot" /><span>{String(i + 1).padStart(2, '0')} · {s.label} · {s.en}</span>
-          </div>
-        ))}
-      </div>
-
       {step === 'question' && (
-        <div className="reading-stage">
-          <div className="question-stage">
-            <div>
-              <div className="question-prompt-tc">向 牌 堆<br/>提 出 一 個 問 題</div>
-              <div className="question-prompt-en">— and the cards will answer.</div>
-              <p className="question-hint">問題越具體，啟示越清晰。塔羅不擅長回答「會不會」，</p>
-              <p className="question-hint">它擅長回答「為什麼」、「如何」、「現在」。</p>
-              <button className="btn-primary" style={{ marginTop: 40 }} disabled={!question.trim()} onClick={() => setStep('shuffle')}>確認問題 · 進入洗牌 →</button>
-            </div>
-            <div>
-              <div className="question-input-wrap">
-                <Eyebrow>YOUR INQUIRY</Eyebrow>
-                <textarea className="question-input" placeholder="例如：在這份工作裡，我真正在追尋的是什麼？" value={question} onChange={(e) => setQuestion(e.target.value.slice(0, 140))} style={{ marginTop: 16 }} />
-                <div className="question-counter"><span>{question.length} / 140</span><span>{spread.name} · {spread.count} CARDS</span></div>
-              </div>
-              <div className="question-suggestions">
-                {['我此刻最需要看見什麼？', '與 ___ 的關係將走向何處？', '這個決定背後我真正在害怕什麼？', '本月我的核心課題是什麼？', '靈魂層面想要對我說什麼？'].map((q) => (
-                  <button key={q} className="question-chip" onClick={() => setQuestion(q)}>{q}</button>
-                ))}
-              </div>
-            </div>
-          </div>
+        <div className="question-stage">
+          <textarea className="question-input" placeholder="輸入你的問題..." value={question} onChange={(e) => setQuestion(e.target.value)} />
+          <button className="btn-primary" onClick={() => setStep('shuffle')}>開始洗牌</button>
         </div>
       )}
-
-      {step === 'shuffle' && (
-        <div className="reading-stage">
-          <div className="shuffle-stage">
-            <div className="shuffle-question">「{question}」</div>
-            <div className="shuffle-status">SHUFFLING · 洗牌中 · 請靜心呼吸</div>
-            <div className="shuffle-deck">{[0,1,2,3,4,5].map((i) => <div key={i} className="shuffle-card" />)}</div>
-          </div>
-        </div>
-      )}
-
+      {step === 'shuffle' && <div className="shuffle-stage">洗牌中...</div>}
       {step === 'pick' && (
-        <div className="reading-stage">
-          <div className="fan-stage">
-            <div className="fan-instruction" style={{ marginBottom: 32 }}>「{question}」</div>
-
-            {/* 新增：正逆位與抽牌設定控制面板 */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 48, justifyContent: 'center', marginBottom: 40, padding: '20px 40px', background: 'var(--midnight)', border: '1px solid var(--line-dim)', borderRadius: '8px' }}>
-              <div style={{ textAlign: 'center' }}>
-                <Eyebrow dim>抽牌模式 · VIEW MODE</Eyebrow>
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 12 }}>
-                  <button className="btn-ghost" onClick={() => setIsFaceUpDraw(false)} style={!isFaceUpDraw ? {borderColor:'var(--gold)', color:'var(--gold)'} : {}}>盲抽 (背面)</button>
-                  <button className="btn-ghost" onClick={() => setIsFaceUpDraw(true)} style={isFaceUpDraw ? {borderColor:'var(--gold)', color:'var(--gold)'} : {}}>直觀 (正面)</button>
-                </div>
+        <div className="fan-stage">
+          <div className="fan-container">
+            {drawn.map((card, i) => (
+              <div key={i} className="fan-card-wrap" onClick={() => togglePick(i)}>
+                <TarotCard card={isFaceUpDraw ? card : null} faceDown={!isFaceUpDraw} reversed={isFaceUpDraw ? card.isReversed : false} size="sm" />
               </div>
-              <div style={{ width: 1, background: 'var(--line-dim)' }} />
-              <div style={{ textAlign: 'center' }}>
-                <Eyebrow dim>正逆位設定 · ORIENTATION SETTING</Eyebrow>
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 12 }}>
-                  <button className="btn-ghost" onClick={() => setDrawMode('random')} style={drawMode === 'random' ? {borderColor:'var(--gold)', color:'var(--gold)'} : {}}>隨機 (預設)</button>
-                  <button className="btn-ghost" onClick={() => setDrawMode('upright')} style={drawMode === 'upright' ? {borderColor:'var(--gold)', color:'var(--gold)'} : {}}>強制正位</button>
-                  <button className="btn-ghost" onClick={() => setDrawMode('reversed')} style={drawMode === 'reversed' ? {borderColor:'var(--gold)', color:'var(--gold)'} : {}}>強制逆位</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="fan-counter">
-              {isFaceUpDraw ? 'OPEN DRAW' : 'BLIND DRAW'} · CHOOSE {spread.count} CARDS · {picked.length} / {spread.count} SELECTED
-            </div>
-
-            <div className="fan-container">
-              {drawn.map((card, i) => {
-                const total = drawn.length;
-                const angle = ((i - (total - 1) / 2) / total) * 60;
-                const offsetX = ((i - (total - 1) / 2) / total) * 900;
-                // 即時反映正逆位設定的視覺
-                const isCardReversed = drawMode === 'random' ? card.isReversed : (drawMode === 'reversed');
-                return (
-                  <div
-                    key={i}
-                    className={`fan-card-wrap ${picked.includes(i) ? 'picked' : ''}`}
-                    style={{ '--rot': `rotate(${angle}deg) translateX(${offsetX}px)`, transform: `rotate(${angle}deg) translateX(${offsetX}px)`, zIndex: i }}
-                    onClick={() => togglePick(i)}
-                  >
-                    <TarotCard card={isFaceUpDraw ? card : null} faceDown={!isFaceUpDraw} reversed={isFaceUpDraw ? isCardReversed : false} size="sm" />
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="picked-tray">
-              {Array.from({ length: spread.count }).map((_, i) => (
-                <div key={i} className="picked-slot">
-                  <div className="picked-slot-label">{spread.positions[i].name}</div>
-                  {picked[i] !== undefined ? (<TarotCard faceDown size="sm" />) : (<div className="picked-empty">{i + 1}</div>)}
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       )}
@@ -281,129 +121,79 @@ function ReadingView({ spread, onComplete, onNav }) {
   );
 }
 
-// ───────────────────── RESULT 解讀 ─────────────────────
-function PositionPlacement({ result }) {
-  const { spread, cards } = result;
-  const layout = spread.layout;
-
-  if (layout === 'single') return (<div style={{ display: 'flex', justifyContent: 'center' }}><PositionCard idx={0} card={cards[0]} pos={spread.positions[0]} size="lg" /></div>);
-  if (layout === 'three' || layout === 'relation') return (<div style={{ display: 'flex', gap: 48, justifyContent: 'center', flexWrap: 'wrap' }}>{cards.map((c, i) => (<PositionCard key={i} idx={i} card={c} pos={spread.positions[i]} size="md" />))}</div>);
-  if (layout === 'horseshoe') return (
-    <div style={{ position: 'relative', height: 420, width: '100%' }}>
-      {cards.map((c, i) => {
-        const total = cards.length;
-        const a = ((i / (total - 1)) - 0.5) * Math.PI * 0.7;
-        const x = Math.sin(a) * 320; const y = -Math.cos(a) * 90 + 120;
-        return (<div key={i} style={{ position: 'absolute', left: '50%', top: '50%', transform: `translate(${x}px, ${y - 200}px)` }}><PositionCard idx={i} card={c} pos={spread.positions[i]} size="sm" /></div>);
-      })}
-    </div>
-  );
-  if (layout === 'celtic') {
-    const positions = [ { x: -100, y: 0 }, { x: -100, y: 0, rot: 90 }, { x: -100, y: 160 }, { x: -260, y: 0 }, { x: -100, y: -160 }, { x: 60, y: 0 }, { x: 240, y: 220 }, { x: 240, y: 80 }, { x: 240, y: -60 }, { x: 240, y: -200 } ];
-    return (
-      <div style={{ position: 'relative', height: 600, width: '100%' }}>
-        {cards.map((c, i) => {
-          const p = positions[i];
-          return (<div key={i} style={{ position: 'absolute', left: '50%', top: '50%', transform: `translate(${p.x}px, ${p.y - 130}px) ${p.rot ? `rotate(${p.rot}deg)` : ''}`, zIndex: i === 1 ? 5 : 1 }}><PositionCard idx={i} card={c} pos={spread.positions[i]} size="xs" hideLabel /></div>);
-        })}
-      </div>
-    );
-  }
-  return null;
-}
-
-function PositionCard({ idx, card, pos, size, hideLabel }) {
-  return (
-    <div className="position-card">
-      {!hideLabel && (<div><div className="position-num">{String(idx + 1).padStart(2, '0')}</div><div className="position-label">{pos.name}</div></div>)}
-      <TarotCard card={card} reversed={card.isReversed} size={size} />
-    </div>
-  );
-}
-
+// ───────────────────── RESULT (核心 AI 修改處) ─────────────────────
 function ResultView({ result, onNav, onNew }) {
-  if (!result) return (<div className="view-container fade-in"><div style={{ textAlign: 'center', padding: '120px 0' }}><h2 className="view-title-tc">尚 無 解 讀</h2><button className="btn-primary" style={{ marginTop: 32 }} onClick={() => onNav('spreads')}>開始一次占卜 →</button></div></div>);
+  const [aiInterpretation, setAiInterpretation] = uS('正在連接靈魂維度，請稍候...');
+  const [loading, setLoading] = uS(true);
 
-  const { spread, question, cards, ts } = result;
-  const date = new Date(ts);
-  const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} · ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  uE(() => {
+    if (!result) return;
 
-  const synthesis = uM(() => {
-    const dominant = cards[0];
-    const last = cards[cards.length - 1];
-    const reversedCount = cards.filter((c) => c.isReversed).length;
-    return [
-      `從牌面整體浮現的能量來看，這個提問正處於 ${dominant.element} 元素為主導的階段——${dominant.isReversed ? '但以內向、潛意識的方式運作' : '以外顯的、可被感知的方式發生'}。`,
-      `「${dominant.name}」於起首位現身，意味著 ${dominant.upright.split('。')[0]}。${reversedCount > 0 ? `其中 ${reversedCount} 張為逆位，這提醒你：答案不在你以為的方向，而在你尚未願意直視的角落。` : '所有牌皆為正位，能量是清明且向外流動的。'}`,
-      `而最終以「${last.name}」收束——這不是預言，而是一個邀請：當你願意以 ${last.element} 的方式回應，事件將自然走向 ${last.isReversed ? '一個需要再次審視的轉折' : '一個明朗的階段'}。`,
-      `*記住：牌只是鏡子。它映照的，是你內在已經知道、卻尚未承認的真相。*`,
-    ];
-  }, [cards]);
+    const askAI = async () => {
+      setLoading(true);
+      try {
+        // 這裡設定為連線到你本地的 Ollama (預設連接埠 11434)
+        // 如果你使用 OpenClaw 或其他服務，請修改此 URL
+        const response = await fetch('http://localhost:11434/api/generate', {
+          method: 'POST',
+          body: JSON.stringify({
+            model: 'llama3', // 請確認你本地已下載的模型名稱
+            prompt: `你是一位神秘、專業且具備同理心的塔羅大師。
+使用者問了這個問題：「${result.question}」
+抽到的牌陣是：「${result.spread.name}」
+抽到的牌包含：
+${result.cards.map((c, i) => `- 位置 ${result.spread.positions[i].name}：${c.name} (${c.isReversed ? '逆位' : '正位'})`).join('\n')}
+
+請針對使用者的問題，結合牌義與牌陣位置給出深刻的整體分析，字數約 300 字，口吻要優雅且富有啟示性。`,
+            stream: false
+          }),
+        });
+
+        const data = await response.json();
+        setAiInterpretation(data.response);
+      } catch (error) {
+        setAiInterpretation("目前無法連接到本地 AI 大腦。請確保 Ollama 已啟動，或手動進行解讀。");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    askAI();
+  }, [result]);
+
+  if (!result) return null;
 
   return (
     <div className="view-container fade-in">
       <header className="view-header">
-        <div><Eyebrow>04 · INTERPRETATION</Eyebrow><h2 className="view-title-tc">解 讀 之 章</h2><div className="view-title-en">A reading from {spread.en}</div></div>
-        <div className="view-header-meta"><div>{dateStr}</div><div>{spread.name} · {cards.length} CARDS</div></div>
+        <h2 className="view-title-tc">解 讀 之 章</h2>
       </header>
-
-      <div className="reading-result-header">
-        <Eyebrow>QUESTION</Eyebrow><div className="result-question">{question}</div>
-        <div className="result-meta"><div>SEED · {String(ts).slice(-6)}</div><div>{cards.filter((c) => c.isReversed).length} REVERSED</div></div>
-      </div>
-
-      <div className="spread-canvas">
-        <div className="spread-canvas-inner" style={{ minHeight: spread.layout === 'celtic' ? 640 : 480 }}><PositionPlacement result={result} /></div>
-      </div>
-
+      <div className="result-question">問題：{result.question}</div>
+      
       <div className="ai-synthesis">
-        <div className="ai-synthesis-eyebrow"><span className="ai-pulse" /><Eyebrow>SYNTHESIS · 整體解讀 · ORACLE SPEAKS</Eyebrow></div>
-        <h3 className="ai-synthesis-title">當 牌 與 牌 相 遇</h3>
+        <div className="ai-synthesis-eyebrow">
+          <span className={loading ? "ai-pulse loading" : "ai-pulse"} />
+          <Eyebrow>ORACLE SPEAKS · AI 專屬解讀</Eyebrow>
+        </div>
         <div className="ai-synthesis-body">
-          {synthesis.map((p, i) => (<p key={i} dangerouslySetInnerHTML={{ __html: p.replace(/\*(.+?)\*/g, '<em>$1</em>') }} />))}
+          {aiInterpretation.split('\n').map((p, i) => <p key={i}>{p}</p>)}
         </div>
       </div>
 
-      <div style={{ marginBottom: 56 }}>
-        <Eyebrow>逐張解讀 · CARD BY CARD</Eyebrow>
-        <div className="interpretation-grid" style={{ marginTop: 32 }}>
-          {cards.map((c, i) => (
-            <div key={i} className="interp-card-detail" style={{ display: 'flex', flexDirection: 'column', gap: 32, paddingBottom: 48 }}>
-              <div style={{ display: 'flex', gap: 32 }}>
-                <TarotCard card={c} reversed={c.isReversed} size="sm" />
-                <div style={{ flex: 1 }}>
-                  <div className="interp-pos-tag">{String(i + 1).padStart(2, '0')} · {spread.positions[i].name}</div>
-                  <h4 className="interp-card-name">{c.name}</h4><div className="interp-card-en">{c.en}</div>
-                  <div className={`interp-card-orient ${c.isReversed ? 'reversed' : ''}`}>
-                    {c.isReversed ? 'REVERSED · 逆位' : 'UPRIGHT · 正位'} · {c.element} · {c.planet}
-                  </div>
-                  <div className="interp-keywords">{c.keywords.map((k) => <span key={k} className="interp-kw">{k}</span>)}</div>
-                  <p className="interp-text" style={{ marginTop: 16 }}>
-                    <strong style={{ color: 'var(--gold)', fontWeight: 500 }}>位置含義 — </strong>{spread.positions[i].meaning}。
-                  </p>
-                </div>
-              </div>
-              
-              {/* 新增：雙並列解讀區塊 (同時顯示正逆位，並加深抽中狀態) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, padding: 32, background: 'var(--midnight)', border: '1px solid var(--line-dim)', borderRadius: 8 }}>
-                <div style={{ opacity: c.isReversed ? 0.4 : 1, transition: 'all 0.3s' }}>
-                  <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--gold)', letterSpacing: '0.2em', marginBottom: 16 }}>UPRIGHT · 正位</div>
-                  <p className="interp-text" style={{ fontSize: 14, lineHeight: 1.85 }}>{c.upright}</p>
-                </div>
-                <div style={{ opacity: c.isReversed ? 1 : 0.4, transition: 'all 0.3s' }}>
-                  <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ember)', letterSpacing: '0.2em', marginBottom: 16 }}>REVERSED · 逆位</div>
-                  <p className="interp-text" style={{ fontSize: 14, lineHeight: 1.85 }}>{c.reversed}</p>
-                </div>
-              </div>
+      <div className="interpretation-grid">
+        {result.cards.map((c, i) => (
+          <div key={i} className="interp-card-detail">
+            <TarotCard card={c} reversed={c.isReversed} size="sm" />
+            <div>
+              <div className="interp-pos-tag">{result.spread.positions[i].name}</div>
+              <h4>{c.name} ({c.isReversed ? '逆位' : '正位'})</h4>
+              <p>{c.isReversed ? c.reversed : c.upright}</p>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
 
-      <div className="result-actions">
-        <button className="btn-primary" onClick={onNew}>新的占卜 · New Reading</button>
-        <button className="btn-ghost" onClick={() => onNav('archive')}>儲存至紀錄</button>
-      </div>
+      <button className="btn-primary" onClick={onNew}>重新占卜</button>
     </div>
   );
 }
