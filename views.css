@@ -1399,3 +1399,213 @@
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ============================================================
+   手機版適配 Mobile Responsive (max-width: 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* ── 導覽：側欄 → 底部橫條 ── */
+  .orbit-nav {
+    position: fixed;
+    top: auto;
+    left: 0; right: 0; bottom: 0;
+    width: 100%;
+    height: 60px;
+    flex-direction: row;
+    padding: 0;
+    border-right: none;
+    border-top: 1px solid var(--line-dim);
+  }
+  .orbit-mark,
+  .orbit-line,
+  .orbit-foot { display: none; }
+  .orbit-items {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0;
+    width: 100%;
+    gap: 0;
+    flex: 1;
+  }
+  .orbit-item {
+    flex: 1;
+    padding: 6px 2px;
+    height: 60px;
+    justify-content: center;
+  }
+  .orbit-item.active::before {
+    left: 50%; top: 0; bottom: auto;
+    transform: translateX(-50%);
+    width: 24px; height: 2px;
+    box-shadow: none;
+  }
+  .orbit-num { display: none; }
+  .orbit-en  { display: none; }
+  .orbit-glyph-sm { font-size: 20px; margin: 0; }
+  .orbit-tc  { font-size: 9px; letter-spacing: 0.08em; }
+
+  /* ── 主畫布 ── */
+  .canvas {
+    margin-left: 0;
+    padding-bottom: 68px;
+  }
+
+  /* ── 視圖容器 ── */
+  .view-container { padding: 20px 16px 40px; }
+
+  /* ── 通用 Header ── */
+  .view-title-tc { font-size: 32px; }
+  .view-title-en { font-size: 15px; }
+  .view-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    gap: 4px;
+  }
+  .view-header-meta { display: none; }
+
+  /* ── 首頁 ── */
+  .home-hero { grid-template-columns: 1fr; gap: 20px; min-height: auto; }
+  .home-altar { height: 260px; }
+  .home-altar-compass svg { width: 260px !important; height: 260px !important; }
+  .home-title-tc { font-size: 52px; }
+  .home-title-en { font-size: 26px; margin-bottom: 16px; }
+  .home-quote { font-size: 15px; margin-bottom: 24px; }
+  .home-quote::before { font-size: 28px; vertical-align: -6px; }
+  .home-actions { flex-wrap: wrap; gap: 10px; }
+  .home-actions-meta { display: none; }
+  .home-stats {
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 24px;
+    padding-top: 24px;
+  }
+  .home-stat { padding: 0 12px; }
+  .home-stat:nth-child(1),
+  .home-stat:nth-child(3) { border-left: none; padding-left: 0; }
+  .home-stat:nth-child(3),
+  .home-stat:nth-child(4) {
+    border-top: 1px solid var(--line-dim);
+    padding-top: 16px;
+    margin-top: 16px;
+  }
+  .home-stat-num { font-size: 28px; }
+
+  /* ── 牌陣選擇 ── */
+  .spreads-grid { grid-template-columns: 1fr; }
+  .spread-cell { min-height: auto; padding: 20px 16px; }
+  .spread-cell-title { font-size: 22px; margin-top: 8px; }
+  .spread-mini { height: 64px; }
+
+  /* ── 占卜步驟指示 ── */
+  .ritual-step-indicator {
+    gap: 6px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    margin-bottom: 20px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ritual-step { font-size: 8px; gap: 4px; white-space: nowrap; }
+  .ritual-step-dot { width: 6px; height: 6px; }
+
+  /* ── 提問步驟 ── */
+  .reading-stage { min-height: calc(100dvh - 160px); }
+  .question-stage { grid-template-columns: 1fr; gap: 24px; }
+  .question-prompt-tc { font-size: 36px; }
+  .question-prompt-en { font-size: 18px; margin-bottom: 12px; }
+  .question-hint { font-size: 13px; }
+  .question-input-wrap { padding: 16px; min-height: auto; }
+  .question-input { font-size: 16px; min-height: 100px; }
+  .question-counter { font-size: 9px; }
+  .question-suggestions { gap: 6px; margin-top: 16px; }
+  .question-chip { font-size: 11px; padding: 7px 12px; }
+
+  /* ── 洗牌 / 切牌 ── */
+  .shuffle-stage { justify-content: flex-start; padding-top: 32px; }
+  .shuffle-deck { width: 140px; height: 220px; }
+  .shuffle-card { width: 110px; height: 180px; }
+  .shuffle-question { font-size: 16px; }
+  .shuffle-status { font-size: 9px; margin-bottom: 32px; }
+
+  /* ── 扇形選牌 ── */
+  .fan-container { height: 240px; padding-top: 16px; }
+  .fan-instruction { font-size: 15px; margin-bottom: 4px; }
+  .fan-counter { margin-bottom: 16px; font-size: 9px; }
+  .fan-card-wrap:hover { transform: var(--rot) translateY(-16px); }
+  .picked-tray {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: center;
+    min-height: auto;
+  }
+  .picked-empty { width: 60px; height: 100px; font-size: 14px; }
+  .picked-slot-label { font-size: 8px; }
+
+  /* ── 解讀結果 ── */
+  .reading-result-header { grid-template-columns: 1fr; gap: 12px; }
+  .result-question { font-size: 17px; }
+  .result-meta { display: none; }
+
+  .spread-canvas { padding: 20px 12px; }
+  .spread-canvas::before { display: none; }
+  .spread-canvas-inner { overflow-x: auto; -webkit-overflow-scrolling: touch; min-height: 280px !important; }
+
+  .interpretation-grid { grid-template-columns: 1fr; gap: 0; }
+  .interp-card-detail { flex-direction: column; gap: 16px; padding: 24px 0; }
+  .interp-card-name { font-size: 22px; }
+  .interp-card-en  { font-size: 15px; }
+  .interp-text { font-size: 14px; line-height: 1.8; }
+
+  .ai-synthesis { padding: 24px 16px; margin-bottom: 28px; }
+  .ai-synthesis::before { display: none; }
+  .ai-synthesis-title { font-size: 22px; }
+  .ai-synthesis-body { font-size: 15px; line-height: 1.8; }
+
+  .result-actions { flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+  /* ── 每日一牌 ── */
+  .daily-stage { grid-template-columns: 1fr; min-height: auto; gap: 24px; }
+  .daily-card-frame { height: 340px; }
+  .daily-card-frame .card-glow { width: 220px; height: 220px; }
+  .daily-title-tc { font-size: 40px; }
+  .daily-title-en { font-size: 22px; margin-bottom: 16px; }
+  .daily-summary  { font-size: 16px; }
+  .daily-meta-grid { grid-template-columns: 1fr 1fr; }
+  .daily-meta-cell:nth-child(2) { border-right: none; }
+  .daily-meta-cell:nth-child(3) {
+    grid-column: 1 / -1;
+    border-right: none;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px solid var(--line-dim);
+  }
+  .daily-meta-value { font-size: 14px; }
+
+  /* ── 牌義 Modal ── */
+  .codex-modal-backdrop { padding: 0; align-items: flex-end; }
+  .codex-modal {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 24px 16px 32px;
+    max-height: 85vh;
+    border-radius: 12px 12px 0 0;
+  }
+  .codex-modal-close { top: 16px; right: 16px; }
+  .codex-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 16px; }
+
+  /* ── 歷史紀錄 ── */
+  .archive-layout { grid-template-columns: 1fr; }
+  .archive-detail { position: relative; top: 0; }
+  .archive-stats  { grid-template-columns: repeat(2, 1fr); }
+  .archive-stat   { padding: 16px; }
+  .archive-stat:nth-child(even) { border-right: none; }
+  .archive-stat:nth-child(n+3) { border-top: 1px solid var(--line-dim); }
+  .archive-stat-num { font-size: 28px; }
+
+  /* ── 按鈕 ── */
+  .btn-primary { padding: 14px 20px; font-size: 10px; }
+}

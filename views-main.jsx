@@ -359,8 +359,9 @@ function ReadingView({ spread, onComplete, onNav }) {
             <div className="fan-container">
               {drawn.map((_, i) => {
                 const total = drawn.length;
-                const angle = ((i - (total - 1) / 2) / total) * 60;
-                const offsetX = ((i - (total - 1) / 2) / total) * 900;
+                const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+                const angle = ((i - (total - 1) / 2) / total) * (isMobile ? 50 : 60);
+                const offsetX = ((i - (total - 1) / 2) / total) * (isMobile ? 280 : 900);
                 return (
                   <div
                     key={i}
