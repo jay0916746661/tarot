@@ -182,11 +182,75 @@ function SpreadsView({ onNav, onSelectSpread }) {
 }
 
 // ───────────────────── READING (流程) ─────────────────────
+const QUESTION_CATEGORIES = [
+  {
+    id: 'self', label: '自我', en: 'SELF',
+    questions: [
+      '我此刻最需要看見什麼？',
+      '什麼信念正在限制我的發展？',
+      '我的靈魂這個月在學習什麼課題？',
+      '如何找回內心的平衡？',
+      '我現在最需要放下的是什麼？',
+    ],
+  },
+  {
+    id: 'love', label: '愛情', en: 'LOVE',
+    questions: [
+      '這段關係現在處於什麼階段？',
+      '是什麼阻礙了我在感情中的前進？',
+      '這段關係對我的成長有什麼意義？',
+      '我應該如何表達自己的感受？',
+      '這份愛值得繼續投入嗎？',
+    ],
+  },
+  {
+    id: 'career', label: '事業', en: 'CAREER',
+    questions: [
+      '目前工作中我最需要注意的是什麼？',
+      '轉換跑道的時機到了嗎？',
+      '我的職業天賦在哪個方向最能發揮？',
+      '與同事或上司的關係如何改善？',
+      '這個職業決定的潛在影響是什麼？',
+    ],
+  },
+  {
+    id: 'wealth', label: '財運', en: 'WEALTH',
+    questions: [
+      '目前財務狀況有哪些我忽略的風險？',
+      '這項投資是否適合現在的我？',
+      '如何改善我與金錢的關係？',
+      '吸引財富最需要調整的心態是什麼？',
+      '短期財務壓力的根源在哪裡？',
+    ],
+  },
+  {
+    id: 'wellness', label: '身心靈', en: 'WELLNESS',
+    questions: [
+      '我的身體現在最需要什麼？',
+      '近期情緒波動的深層原因是什麼？',
+      '哪種靈性練習最適合我現在的狀態？',
+      '我需要放下什麼才能獲得平靜？',
+      '下一步靈性成長的方向是什麼？',
+    ],
+  },
+  {
+    id: 'social', label: '人際', en: 'SOCIAL',
+    questions: [
+      '這段友誼的真實樣貌是什麼？',
+      '如何修復受損的關係？',
+      '我在這段關係中扮演什麼角色？',
+      '是否該結束這段關係？',
+      '如何建立更深層的連結？',
+    ],
+  },
+];
+
 function ReadingView({ spread, onComplete, onNav }) {
   const [step, setStep] = uS(spread ? 'question' : 'no-spread');
   const [question, setQuestion] = uS('');
   const [drawn, setDrawn] = uS([]);
   const [picked, setPicked] = uS([]);
+  const [selectedCat, setSelectedCat] = uS('self');
   const fanCount = 22;
 
   uE(() => {
@@ -298,16 +362,31 @@ function ReadingView({ spread, onComplete, onNav }) {
                   <span>{spread.name} · {spread.count} CARDS</span>
                 </div>
               </div>
-              <div className="question-suggestions">
-                {[
-                  '我此刻最需要看見什麼？',
-                  '與 ___ 的關係將走向何處？',
-                  '這個決定背後我真正在害怕什麼？',
-                  '本月我的核心課題是什麼？',
-                  '靈魂層面想要對我說什麼？',
-                ].map((q) => (
-                  <button key={q} className="question-chip" onClick={() => setQuestion(q)}>{q}</button>
-                ))}
+              <div className="question-cat-panel">
+                <div className="question-cats">
+                  {QUESTION_CATEGORIES.map(cat => (
+                    <button
+                      key={cat.id}
+                      className={`question-cat-btn ${selectedCat === cat.id ? 'active' : ''}`}
+                      onClick={() => setSelectedCat(cat.id)}
+                    >
+                      <span className="question-cat-label">{cat.label}</span>
+                      <span className="question-cat-en">{cat.en}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="question-sublist">
+                  {QUESTION_CATEGORIES.find(c => c.id === selectedCat)?.questions.map(q => (
+                    <button
+                      key={q}
+                      className={`question-subitem ${question === q ? 'active' : ''}`}
+                      onClick={() => setQuestion(q)}
+                    >
+                      <span className="question-subitem-arrow">→</span>
+                      {q}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

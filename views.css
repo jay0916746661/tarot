@@ -651,6 +651,96 @@
   color: var(--gold);
 }
 
+/* 問題分類面板 */
+.question-cat-panel { margin-top: 20px; }
+
+.question-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.question-cat-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--mist);
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 64px;
+}
+
+.question-cat-label {
+  font-family: var(--tc);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+}
+
+.question-cat-en {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.22em;
+}
+
+.question-cat-btn:hover,
+.question-cat-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: color-mix(in oklch, var(--gold) 6%, transparent);
+}
+
+.question-sublist {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line-dim);
+  background: var(--midnight);
+}
+
+.question-subitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line-dim);
+  padding: 11px 14px;
+  color: var(--mist);
+  font-family: var(--tc);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.question-subitem:last-child { border-bottom: none; }
+
+.question-subitem-arrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--line-strong);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.question-subitem:hover,
+.question-subitem.active {
+  color: var(--parchment);
+  background: color-mix(in oklch, var(--gold) 5%, transparent);
+  padding-left: 20px;
+}
+
+.question-subitem:hover .question-subitem-arrow,
+.question-subitem.active .question-subitem-arrow {
+  color: var(--gold);
+}
+
 .question-counter {
   font-family: var(--mono);
   font-size: 10px;
@@ -1567,6 +1657,10 @@
   .question-counter { font-size: 9px; }
   .question-suggestions { gap: 6px; margin-top: 16px; }
   .question-chip { font-size: 11px; padding: 7px 12px; }
+  .question-cat-btn { min-width: 54px; padding: 8px 10px; }
+  .question-cat-label { font-size: 13px; }
+  .question-subitem { font-size: 13px; padding: 10px 12px; }
+  .question-subitem:hover, .question-subitem.active { padding-left: 16px; }
 
   /* ── 洗牌 / 切牌 ── */
   .shuffle-stage { justify-content: flex-start; padding-top: 32px; }
