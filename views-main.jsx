@@ -187,6 +187,7 @@ function ReadingView({ spread, onComplete, onNav }) {
   const [question, setQuestion] = uS('');
   const [drawn, setDrawn] = uS([]);
   const [picked, setPicked] = uS([]);
+  const [isFaceUpDraw, setIsFaceUpDraw] = uS(false); // 控制正面或背面抽牌
   const fanCount = 22;
 
   uE(() => {
@@ -321,9 +322,39 @@ function ReadingView({ spread, onComplete, onNav }) {
         <div className="reading-stage">
           <div className="fan-stage">
             <div className="fan-instruction">「{question}」</div>
-            <div className="fan-counter">CHOOSE {spread.count} CARDS · {picked.length} / {spread.count} SELECTED</div>
+
+            {/* 正面/背面切換按鈕 */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 32 }}>
+              <button 
+                className="btn-ghost" 
+                onClick={() => setIsFaceUpDraw(false)}
+                style={{ 
+                  borderColor: !isFaceUpDraw ? 'var(--gold)' : 'var(--line)', 
+                  color: !isFaceUpDraw ? 'var(--gold)' : 'var(--mist)',
+                  background: !isFaceUpDraw ? 'rgba(217, 184, 115, 0.05)' : 'transparent'
+                }}
+              >
+                背面抽牌 (盲抽)
+              </button>
+              <button 
+                className="btn-ghost" 
+                onClick={() => setIsFaceUpDraw(true)}
+                style={{ 
+                  borderColor: isFaceUpDraw ? 'var(--gold)' : 'var(--line)', 
+                  color: isFaceUpDraw ? 'var(--gold)' : 'var(--mist)',
+                  background: isFaceUpDraw ? 'rgba(217, 184, 115, 0.05)' : 'transparent'
+                }}
+              >
+                正面抽牌 (直觀)
+              </button>
+            </div>
+
+            <div className="fan-counter">
+              {isFaceUpDraw ? 'OPEN DRAW' : 'BLIND DRAW'} · CHOOSE {spread.count} CARDS · {picked.length} / {spread.count} SELECTED
+            </div>
+
             <div className="fan-container">
-              {drawn.map((_, i) => {
+              {drawn.map((card, i) => {
                 const total = drawn.length;
                 const angle = ((i - (total - 1) / 2) / total) * 60;
                 const offsetX = ((i - (total - 1) / 2) / total) * 900;
@@ -338,7 +369,12 @@ function ReadingView({ spread, onComplete, onNav }) {
                     }}
                     onClick={() => togglePick(i)}
                   >
-                    <TarotCard faceDown size="sm" />
+                    <TarotCard 
+                      card={isFaceUpDraw ? card : null} 
+                      faceDown={!isFaceUpDraw} 
+                      reversed={isFaceUpDraw ? card.reversed : false}
+                      size="sm" 
+                    />
                   </div>
                 );
               })}
@@ -347,7 +383,7 @@ function ReadingView({ spread, onComplete, onNav }) {
             <div className="picked-tray">
               {Array.from({ length: spread.count }).map((_, i) => (
                 <div key={i} className="picked-slot">
-                  <div className="picked-slot-label">{spread.positions[i].name} · {String(i + 1).padStart(2, '0')}</div>
+                  <div className="picked-slot-label">{spread.positions[i].name}</div>
                   {picked[i] !== undefined ? (
                     <TarotCard faceDown size="sm" />
                   ) : (
@@ -545,8 +581,8 @@ function ResultView({ result, onNav, onNew }) {
                   {spread.positions[i].meaning}。
                 </p>
                 <p className="interp-text">
-                  {c.reversed ? c.reversed === true ? c.upright : c.reversed : c.upright}
-                  {c.reversed && <em style={{ color: 'var(--ember)', fontStyle: 'italic' }}>（{c.reversed === true ? '能量內收，需向內觀照' : ''}）</em>}
+                  {c.reversed ? (typeof c.reversed === 'string' ? c.reversed : c.upright) : c.upright}
+                  {c.reversed && <em style={{ color: 'var(--ember)', fontStyle: 'italic' }}>（能量內收，需向內觀照）</em>}
                 </p>
               </div>
             </div>
