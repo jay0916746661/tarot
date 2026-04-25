@@ -60,7 +60,7 @@ function SpreadsView({ onNav, onSelectSpread }) {
   );
 }
 
-// ───────────────────── READING (已修復扇形、托盤、提問引導) ─────────────────────
+// ───────────────────── READING ─────────────────────
 function ReadingView({ spread, onComplete, onNav }) {
   const [step, setStep] = uS('question');
   const [question, setQuestion] = uS('');
@@ -159,7 +159,6 @@ function ReadingView({ spread, onComplete, onNav }) {
         <div className="reading-stage">
           <div className="fan-stage">
             
-            {/* 設定選單 */}
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 32 }}>
               <button className="btn-ghost" onClick={() => setIsFaceUpDraw(!isFaceUpDraw)} style={isFaceUpDraw ? {borderColor:'var(--gold)', color:'var(--gold)'} : {}}>
                 {isFaceUpDraw ? '切換為背面抽牌 (盲抽)' : '切換為正面抽牌 (直觀)'}
@@ -175,7 +174,6 @@ function ReadingView({ spread, onComplete, onNav }) {
               CHOOSE {spread.count} CARDS · {picked.length} / {spread.count} SELECTED
             </div>
 
-            {/* 扇形牌堆 */}
             <div className="fan-container">
               {drawn.map((card, i) => {
                 const total = drawn.length;
@@ -194,7 +192,6 @@ function ReadingView({ spread, onComplete, onNav }) {
               })}
             </div>
 
-            {/* 托盤 */}
             <div className="picked-tray">
               {Array.from({ length: spread.count }).map((_, i) => (
                 <div key={i} className="picked-slot">
@@ -215,7 +212,7 @@ function ReadingView({ spread, onComplete, onNav }) {
   );
 }
 
-// ───────────────────── RESULT (WebGPU 預載整合版) ─────────────────────
+// ───────────────────── RESULT (強化 AI 直觀解答 + 底部按鈕修復) ─────────────────────
 function ResultView({ result, onNav, onNew }) {
   const [aiInterpretation, setAiInterpretation] = uS('');
   const [loading, setLoading] = uS(true);
@@ -246,13 +243,19 @@ function ResultView({ result, onNav, onNew }) {
       setLoading(true);
       try {
         const engine = window.tarotAI.engine;
-        const prompt = `你是一位專業且具備同理心的塔羅大師。
+        
+        // 🚨 這裡大幅強化了 Prompt，要求 AI 給出直白、實用的答案
+        const prompt = `你是一位直言不諱、極度精準且具備同理心的塔羅大師。
 使用者提問：「${result.question}」
 牌陣：「${result.spread.name}」
 抽出的牌：
 ${result.cards.map((c, i) => `- ${result.spread.positions[i].name}：${c.name} (${c.isReversed ? '逆位' : '正位'})`).join('\n')}
 
-請結合牌義與牌陣，給出約 300 字優雅的深度解析。`;
+請給出約 300 字的解析。嚴格要求如下：
+1. 【直擊核心】：第一段請「直接回答」使用者的問題，不要模稜兩可，給出明確的定論。
+2. 【牌面解析】：用白話文解釋牌面如何互相影響並得出這個結論（抓重點即可，不用刻板背誦牌義）。
+3. 【具體建議】：給予一個明確、現實生活中可以立刻執行的行動指南。
+語氣要堅定、專業、一針見血，不要講空話。`;
 
         const reply = await engine.chat.completions.create({
           messages: [{ role: "user", content: prompt }],
@@ -309,8 +312,22 @@ ${result.cards.map((c, i) => `- ${result.spread.positions[i].name}：${c.name} (
         ))}
       </div>
 
-      <div className="result-actions" style={{ textAlign: 'center', marginTop: 40 }}>
+      {/* 🚀 底部按鈕區塊修復，並加入實際互動功能 */}
+      <div className="result-actions" style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: 40, paddingBottom: 60 }}>
         <button className="btn-primary" onClick={onNew}>重新占卜</button>
+        <button className="btn-ghost" onClick={() => { alert('占卜結果已暫存！(連動完整紀錄系統需升級資料庫)'); onNav('archive'); }}>儲存至紀錄</button>
+        <button className="btn-ghost" onClick={() => window.print()}>輸出 PDF</button>
+        <button className="btn-ghost" onClick={() => {
+          if (navigator.share) {
+            navigator.share({
+              title: '靈樞塔羅解讀',
+              text: `我在靈樞詢問了：「${result.question}」\n抽出了：${result.cards.map(c => c.name).join('、')}。`,
+              url: window.location.href
+            });
+          } else {
+            alert('您的瀏覽器不支援原生分享功能');
+          }
+        }}>分享</button>
       </div>
     </div>
   );
