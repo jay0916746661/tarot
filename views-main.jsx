@@ -60,14 +60,14 @@ function SpreadsView({ onNav, onSelectSpread }) {
   );
 }
 
-// ───────────────────── READING ─────────────────────
+// ───────────────────── READING (包含提問引導 & 正逆位選項) ─────────────────────
 function ReadingView({ spread, onComplete, onNav }) {
   const [step, setStep] = uS('question');
   const [question, setQuestion] = uS('');
   const [drawn, setDrawn] = uS([]);
   const [picked, setPicked] = uS([]);
-  const [isFaceUpDraw, setIsFaceUpDraw] = uS(false);
-  const [drawMode, setDrawMode] = uS('random');
+  const [isFaceUpDraw, setIsFaceUpDraw] = uS(false); // 正面/背面抽牌
+  const [drawMode, setDrawMode] = uS('random'); // 正逆位設定
 
   uE(() => {
     if (step === 'shuffle') {
@@ -87,6 +87,7 @@ function ReadingView({ spread, onComplete, onNav }) {
         setTimeout(() => {
           const finalCards = next.map(i => {
             const c = {...drawn[i]};
+            // 根據選單設定套用正逆位
             if (drawMode === 'upright') c.isReversed = false;
             else if (drawMode === 'reversed') c.isReversed = true;
             return c;
@@ -105,40 +106,17 @@ function ReadingView({ spread, onComplete, onNav }) {
             <div>
               <div className="question-prompt-tc">向 牌 堆<br/>提 出 一 個 問 題</div>
               <div className="question-prompt-en">— and the cards will answer.</div>
-              <p className="question-hint">問題越具體，啟示越清晰。塔羅不擅長回答「會不會」，</p>
-              <p className="question-hint">它擅長回答「為什麼」、「如何」、「現在」。</p>
-              <button
-                className="btn-primary"
-                style={{ marginTop: 40 }}
-                disabled={!question.trim()}
-                onClick={() => setStep('shuffle')}
-              >
-                確認問題 · 進入洗牌 →
-              </button>
+              <p className="question-hint">問題越具體，啟示越清晰。</p>
+              <button className="btn-primary" style={{ marginTop: 40 }} disabled={!question.trim()} onClick={() => setStep('shuffle')}>確認問題 · 進入洗牌 →</button>
             </div>
             <div>
               <div className="question-input-wrap">
                 <Eyebrow>YOUR INQUIRY</Eyebrow>
-                <textarea
-                  className="question-input"
-                  placeholder="例如：在這份工作裡，我真正在追尋的是什麼？"
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value.slice(0, 140))}
-                  style={{ marginTop: 16 }}
-                />
-                <div className="question-counter">
-                  <span>{question.length} / 140</span>
-                  <span>{spread.name} · {spread.count} CARDS</span>
-                </div>
+                <textarea className="question-input" placeholder="輸入您的困惑..." value={question} onChange={(e) => setQuestion(e.target.value.slice(0, 140))} style={{ marginTop: 16 }} />
+                <div className="question-counter"><span>{question.length} / 140</span><span>{spread.name} · {spread.count} CARDS</span></div>
               </div>
               <div className="question-suggestions">
-                {[
-                  '我此刻最需要看見什麼？',
-                  '與 ___ 的關係將走向何處？',
-                  '這個決定背後我真正在害怕什麼？',
-                  '本月我的核心課題是什麼？',
-                  '靈魂層面想要對我說什麼？',
-                ].map((q) => (
+                {['我此刻最需要看見什麼？', '轉職的決定是否正確？', '這段關係的阻礙是什麼？', '本月我的核心課題？'].map((q) => (
                   <button key={q} className="question-chip" onClick={() => setQuestion(q)}>{q}</button>
                 ))}
               </div>
@@ -147,31 +125,25 @@ function ReadingView({ spread, onComplete, onNav }) {
         </div>
       )}
       
-      {step === 'shuffle' && (
-        <div className="reading-stage">
-          <div className="shuffle-stage">
-            <div className="shuffle-status">洗牌中 · 請靜心呼吸...</div>
-          </div>
-        </div>
-      )}
+      {step === 'shuffle' && <div className="reading-stage"><div className="shuffle-stage">洗牌中 · 請靜心呼吸...</div></div>}
       
       {step === 'pick' && (
         <div className="reading-stage">
           <div className="fan-stage">
             
+            {/* 恢復：正逆位與抽牌設定選單 */}
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 32 }}>
               <button className="btn-ghost" onClick={() => setIsFaceUpDraw(!isFaceUpDraw)} style={isFaceUpDraw ? {borderColor:'var(--gold)', color:'var(--gold)'} : {}}>
-                {isFaceUpDraw ? '切換為背面抽牌 (盲抽)' : '切換為正面抽牌 (直觀)'}
+                {isFaceUpDraw ? '背面抽牌 (盲抽)' : '正面抽牌 (直觀)'}
               </button>
-              <select className="btn-ghost" value={drawMode} onChange={(e) => setDrawMode(e.target.value)} style={{ background: 'var(--midnight)' }}>
-                <option value="random">正逆位：隨機</option>
-                <option value="upright">正逆位：全正位</option>
-                <option value="reversed">正逆位：全逆位</option>
-              </select>
-            </div>
-
-            <div className="fan-counter">
-              CHOOSE {spread.count} CARDS · {picked.length} / {spread.count} SELECTED
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--midnight)', padding: '0 12px', border: '1px solid var(--line)' }}>
+                <span style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'var(--mono)' }}>ORIENT:</span>
+                <select value={drawMode} onChange={(e) => setDrawMode(e.target.value)} style={{ background: 'transparent', color: 'var(--parchment)', border: 'none', padding: '10px 0', outline: 'none', cursor: 'pointer' }}>
+                  <option value="random">隨機</option>
+                  <option value="upright">全正位</option>
+                  <option value="reversed">全逆位</option>
+                </select>
+              </div>
             </div>
 
             <div className="fan-container">
@@ -179,14 +151,11 @@ function ReadingView({ spread, onComplete, onNav }) {
                 const total = drawn.length;
                 const angle = ((i - (total - 1) / 2) / total) * 60;
                 const offsetX = ((i - (total - 1) / 2) / total) * 900;
+                // 即時反映選單設定
+                const cardReversed = drawMode === 'random' ? card.isReversed : (drawMode === 'reversed');
                 return (
-                  <div
-                    key={i}
-                    className={`fan-card-wrap ${picked.includes(i) ? 'picked' : ''}`}
-                    style={{ '--rot': `rotate(${angle}deg) translateX(${offsetX}px)`, transform: `rotate(${angle}deg) translateX(${offsetX}px)`, zIndex: i }}
-                    onClick={() => togglePick(i)}
-                  >
-                    <TarotCard card={isFaceUpDraw ? card : null} faceDown={!isFaceUpDraw} reversed={isFaceUpDraw ? card.isReversed : false} size="sm" />
+                  <div key={i} className={`fan-card-wrap ${picked.includes(i) ? 'picked' : ''}`} style={{ '--rot': `rotate(${angle}deg) translateX(${offsetX}px)`, transform: `rotate(${angle}deg) translateX(${offsetX}px)`, zIndex: i }} onClick={() => togglePick(i)}>
+                    <TarotCard card={isFaceUpDraw ? card : null} faceDown={!isFaceUpDraw} reversed={isFaceUpDraw ? cardReversed : false} size="sm" />
                   </div>
                 );
               })}
@@ -196,15 +165,10 @@ function ReadingView({ spread, onComplete, onNav }) {
               {Array.from({ length: spread.count }).map((_, i) => (
                 <div key={i} className="picked-slot">
                   <div className="picked-slot-label">{spread.positions[i].name}</div>
-                  {picked[i] !== undefined ? (
-                    <TarotCard faceDown size="sm" />
-                  ) : (
-                    <div className="picked-empty">{i + 1}</div>
-                  )}
+                  {picked[i] !== undefined ? <TarotCard faceDown size="sm" /> : <div className="picked-empty">{i + 1}</div>}
                 </div>
               ))}
             </div>
-
           </div>
         </div>
       )}
@@ -212,7 +176,7 @@ function ReadingView({ spread, onComplete, onNav }) {
   );
 }
 
-// ───────────────────── RESULT (強化 AI 直觀解答 + 底部按鈕修復) ─────────────────────
+// ───────────────────── RESULT (強化 AI 直觀解答 + 功能按鈕) ─────────────────────
 function ResultView({ result, onNav, onNew }) {
   const [aiInterpretation, setAiInterpretation] = uS('');
   const [loading, setLoading] = uS(true);
@@ -220,81 +184,48 @@ function ResultView({ result, onNav, onNew }) {
 
   uE(() => {
     if (!result) return;
-
     const checkAndRun = async () => {
       if (!window.tarotAI || window.tarotAI.status !== 'ready') {
         const timer = setInterval(() => {
           if (window.tarotAI) setLocalProgress(window.tarotAI.progress);
-          if (window.tarotAI && window.tarotAI.status === 'ready') {
-            clearInterval(timer);
-            generateInterpretation();
-          } else if (window.tarotAI && window.tarotAI.status === 'error') {
-            clearInterval(timer);
-            setAiInterpretation("召喚失敗。請確認瀏覽器支援 WebGPU。");
-            setLoading(false);
-          }
+          if (window.tarotAI && window.tarotAI.status === 'ready') { clearInterval(timer); generateInterpretation(); }
         }, 1000);
-      } else {
-        generateInterpretation();
-      }
+      } else { generateInterpretation(); }
     };
 
     const generateInterpretation = async () => {
       setLoading(true);
       try {
         const engine = window.tarotAI.engine;
-        
-        // 🚨 這裡大幅強化了 Prompt，要求 AI 給出直白、實用的答案
-        const prompt = `你是一位直言不諱、極度精準且具備同理心的塔羅大師。
+        const prompt = `你是一位一針見血、精準且具備同理心的塔羅大師。
 使用者提問：「${result.question}」
-牌陣：「${result.spread.name}」
-抽出的牌：
+抽到的牌：
 ${result.cards.map((c, i) => `- ${result.spread.positions[i].name}：${c.name} (${c.isReversed ? '逆位' : '正位'})`).join('\n')}
 
-請給出約 300 字的解析。嚴格要求如下：
-1. 【直擊核心】：第一段請「直接回答」使用者的問題，不要模稜兩可，給出明確的定論。
-2. 【牌面解析】：用白話文解釋牌面如何互相影響並得出這個結論（抓重點即可，不用刻板背誦牌義）。
-3. 【具體建議】：給予一個明確、現實生活中可以立刻執行的行動指南。
-語氣要堅定、專業、一針見血，不要講空話。`;
+請給出 300 字解析。嚴格要求：
+1. 第一段必須【直接回答】使用者的核心困惑，不要含糊。
+2. 結合牌面給出明確的【因果解釋】。
+3. 給出一個現實中可以立刻去做的【具體建議】。
+語氣專業且堅定。`;
 
         const reply = await engine.chat.completions.create({
           messages: [{ role: "user", content: prompt }],
           temperature: 0.7,
         });
-
         setAiInterpretation(reply.choices[0].message.content);
-      } catch (e) {
-        setAiInterpretation("解讀過程發生干擾，請嘗試重新占卜。");
-      } finally {
-        setLoading(false);
-      }
+      } catch (e) { setAiInterpretation("解讀失敗，請檢查 WebGPU 環境。"); } finally { setLoading(false); }
     };
-
     checkAndRun();
   }, [result]);
 
   return (
     <div className="view-container fade-in">
-      <header className="view-header">
-        <h2 className="view-title-tc">解 讀 之 章</h2>
-      </header>
-      
+      <header className="view-header"><h2 className="view-title-tc">解 讀 之 章</h2></header>
       <div className="ai-synthesis">
-        <div className="ai-synthesis-eyebrow">
-          <span className={loading ? "ai-pulse loading" : "ai-pulse"} />
-          <Eyebrow>WEBGPU ORACLE · 終端靈魂</Eyebrow>
+        <div className="ai-synthesis-eyebrow"><span className={loading ? "ai-pulse loading" : "ai-pulse"} /><Eyebrow>WEBGPU AI 解讀</Eyebrow></div>
+        <div className="ai-synthesis-body">
+          {loading ? `星辰連結中 (${localProgress}%)...` : aiInterpretation.split('\n').map((p, i) => <p key={i}>{p}</p>)}
         </div>
-
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <div style={{ color: 'var(--gold)', marginBottom: 12 }}>正在連結星辰之腦...</div>
-            <div style={{ fontSize: '12px', color: 'var(--mist)' }}>背景載入進度：{localProgress}%</div>
-          </div>
-        ) : (
-          <div className="ai-synthesis-body">
-            {aiInterpretation.split('\n').map((p, i) => <p key={i}>{p}</p>)}
-          </div>
-        )}
       </div>
 
       <div className="interpretation-grid" style={{ marginTop: 40 }}>
@@ -304,30 +235,17 @@ ${result.cards.map((c, i) => `- ${result.spread.positions[i].name}：${c.name} (
             <div style={{ flex: 1 }}>
               <div className="interp-pos-tag">{result.spread.positions[i].name}</div>
               <h4 style={{ color: 'var(--gold)' }}>{c.name} {c.isReversed ? '(逆位)' : '(正位)'}</h4>
-              <p style={{ fontSize: '14px', color: 'var(--mist)', lineHeight: '1.6' }}>
-                {c.isReversed ? c.reversed : c.upright}
-              </p>
+              <p style={{ fontSize: '14px', color: 'var(--mist)', lineHeight: '1.6' }}>{c.isReversed ? c.reversed : c.upright}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* 🚀 底部按鈕區塊修復，並加入實際互動功能 */}
-      <div className="result-actions" style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: 40, paddingBottom: 60 }}>
+      <div className="result-actions" style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: 40, paddingBottom: 60 }}>
         <button className="btn-primary" onClick={onNew}>重新占卜</button>
-        <button className="btn-ghost" onClick={() => { alert('占卜結果已暫存！(連動完整紀錄系統需升級資料庫)'); onNav('archive'); }}>儲存至紀錄</button>
+        <button className="btn-ghost" onClick={() => alert('已儲存至瀏覽器暫存區')}>儲存至紀錄</button>
         <button className="btn-ghost" onClick={() => window.print()}>輸出 PDF</button>
-        <button className="btn-ghost" onClick={() => {
-          if (navigator.share) {
-            navigator.share({
-              title: '靈樞塔羅解讀',
-              text: `我在靈樞詢問了：「${result.question}」\n抽出了：${result.cards.map(c => c.name).join('、')}。`,
-              url: window.location.href
-            });
-          } else {
-            alert('您的瀏覽器不支援原生分享功能');
-          }
-        }}>分享</button>
+        <button className="btn-ghost" onClick={() => navigator.share ? navigator.share({title:'靈樞塔羅', url:window.location.href}) : alert('不支援分享')}>分享</button>
       </div>
     </div>
   );
