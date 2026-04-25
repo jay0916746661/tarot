@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>靈樞 Lumen Arcana · 塔羅占卜平台</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="views.css" />
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script src="data.js"></script>
+</head>
+<body>
+  <div class="starfield"></div>
+
+  <div id="root"></div>
+
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="views-main.jsx"></script>
+  <script type="text/babel" src="views-extra.jsx"></script>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [view, setView] = useState('home');
+      const [spread, setSpread] = useState(null);
+      const [result, setResult] = useState(null);
+
+      useEffect(() => {
+        const t = document.getElementById('orbit-time');
+        if (t) {
+          const tick = () => {
+            const d = new Date();
+            t.textContent = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+          };
+          tick();
+          setInterval(tick, 30000);
+        }
+      }, [view]);
+
+      return (
+        <>
+          <FloatingDust />
+          <OrbitNav current={view} onNav={setView} />
+          <div className="canvas" data-screen-label={view}>
+            {view === 'home' && <HomeView onNav={setView} />}
+            {view === 'spreads' && <SpreadsView onNav={setView} onSelectSpread={setSpread} />}
+            {view === 'reading' && (
+              <ReadingView
+                spread={spread}
+                onNav={setView}
+                onComplete={(r) => { setResult(r); setView('result'); }}
+              />
+            )}
+            {view === 'result' && (
+              <ResultView
+                result={result}
+                onNav={setView}
+                onNew={() => { setResult(null); setSpread(null); setView('spreads'); }}
+              />
+            )}
+            {view === 'daily' && <DailyView onNav={setView} />}
+            {view === 'codex' && <CodexView />}
+            {view === 'archive' && <ArchiveView onNav={setView} />}
+          </div>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

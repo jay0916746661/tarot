@@ -1,0 +1,225 @@
+/* ============================================================
+   靈樞 Lumen Arcana — 設計系統
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Noto+Serif+TC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+:root {
+  /* 色彩 — 深紫午夜系 */
+  --void: oklch(8% 0.02 290);
+  --midnight: oklch(14% 0.04 285);
+  --indigo-deep: oklch(20% 0.06 280);
+  --indigo: oklch(30% 0.08 275);
+  --plum: oklch(38% 0.10 305);
+  --mist: oklch(70% 0.04 290);
+  --parchment: oklch(92% 0.02 85);
+
+  /* 金箔 */
+  --gold: oklch(82% 0.13 85);
+  --gold-deep: oklch(68% 0.14 75);
+  --gold-soft: oklch(88% 0.08 88);
+
+  /* 強調 */
+  --ember: oklch(62% 0.18 30);
+  --aurora: oklch(70% 0.12 195);
+
+  /* 線條 */
+  --line: color-mix(in oklch, var(--gold) 18%, transparent);
+  --line-strong: color-mix(in oklch, var(--gold) 35%, transparent);
+  --line-dim: color-mix(in oklch, var(--gold) 8%, transparent);
+
+  /* 字體 */
+  --serif: 'Cormorant Garamond', 'Noto Serif TC', serif;
+  --tc: 'Noto Serif TC', 'Cormorant Garamond', serif;
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--void);
+  color: var(--parchment);
+  font-family: var(--tc);
+  font-weight: 300;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.02em;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 20% 10%, color-mix(in oklch, var(--plum) 30%, transparent) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 80%, color-mix(in oklch, var(--indigo) 40%, transparent) 0%, transparent 50%),
+    var(--void);
+  background-attachment: fixed;
+}
+
+/* 星空粒子背景 */
+.starfield {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, var(--gold-soft), transparent),
+    radial-gradient(1px 1px at 60% 70%, var(--parchment), transparent),
+    radial-gradient(1px 1px at 80% 15%, var(--gold), transparent),
+    radial-gradient(1px 1px at 45% 85%, var(--mist), transparent),
+    radial-gradient(2px 2px at 90% 50%, var(--gold-soft), transparent),
+    radial-gradient(1px 1px at 10% 75%, var(--parchment), transparent),
+    radial-gradient(1px 1px at 35% 50%, var(--gold), transparent),
+    radial-gradient(1px 1px at 70% 25%, var(--mist), transparent),
+    radial-gradient(1px 1px at 25% 90%, var(--gold-soft), transparent),
+    radial-gradient(1px 1px at 95% 90%, var(--parchment), transparent);
+  background-size: 800px 800px;
+  background-repeat: repeat;
+  opacity: 0.5;
+  animation: drift 240s linear infinite;
+}
+
+.starfield::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 15% 60%, var(--gold), transparent),
+    radial-gradient(1px 1px at 55% 20%, var(--parchment), transparent),
+    radial-gradient(1px 1px at 78% 78%, var(--gold-soft), transparent),
+    radial-gradient(1px 1px at 38% 38%, var(--mist), transparent);
+  background-size: 600px 600px;
+  background-repeat: repeat;
+  opacity: 0.6;
+  animation: twinkle 6s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  from { background-position: 0 0; }
+  to { background-position: 800px 800px; }
+}
+
+@keyframes twinkle {
+  from { opacity: 0.3; }
+  to { opacity: 0.8; }
+}
+
+/* 字體類別 */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.eyebrow-dim {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--mist);
+}
+
+.serif-display {
+  font-family: var(--serif);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+
+.tc-display {
+  font-family: var(--tc);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+/* 通用 */
+.divider-gold {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+}
+
+.btn-primary {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  padding: 16px 36px;
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--line-strong);
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary:hover {
+  background: color-mix(in oklch, var(--gold) 10%, transparent);
+  border-color: var(--gold);
+  color: var(--gold-soft);
+}
+
+.btn-ghost {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  background: transparent;
+  color: var(--mist);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.btn-ghost:hover {
+  color: var(--gold);
+  border-color: var(--line-strong);
+}
+
+/* 卡牌通用 */
+.card-face {
+  background:
+    linear-gradient(180deg, oklch(22% 0.07 285) 0%, oklch(15% 0.05 280) 100%);
+  border: 1px solid var(--line-strong);
+  position: relative;
+}
+
+.card-back {
+  background:
+    radial-gradient(circle at 50% 50%, oklch(28% 0.10 290) 0%, oklch(12% 0.04 280) 70%);
+  border: 1px solid var(--line-strong);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-back::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid var(--line);
+  pointer-events: none;
+}
+
+.card-back::after {
+  content: '✦';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+  font-size: 28px;
+  opacity: 0.5;
+}
+
+/* scroll bars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--midnight); }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--line-strong); }
+
+/* selection */
+::selection { background: var(--gold); color: var(--void); }
