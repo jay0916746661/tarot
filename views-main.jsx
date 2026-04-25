@@ -60,7 +60,7 @@ function SpreadsView({ onNav, onSelectSpread }) {
   );
 }
 
-// ───────────────────── READING (已修復扇形與托盤) ─────────────────────
+// ───────────────────── READING (已修復扇形、托盤、提問引導) ─────────────────────
 function ReadingView({ spread, onComplete, onNav }) {
   const [step, setStep] = uS('question');
   const [question, setQuestion] = uS('');
@@ -102,9 +102,47 @@ function ReadingView({ spread, onComplete, onNav }) {
       {step === 'question' && (
         <div className="reading-stage">
           <div className="question-stage">
-            <div className="question-prompt-tc">向 牌 堆 提 出 問 題</div>
-            <textarea className="question-input" placeholder="例如：這份新工作的發展前景如何？" value={question} onChange={(e) => setQuestion(e.target.value)} />
-            <button className="btn-primary" onClick={() => setStep('shuffle')} disabled={!question.trim()}>確認問題 · 開始洗牌</button>
+            <div>
+              <div className="question-prompt-tc">向 牌 堆<br/>提 出 一 個 問 題</div>
+              <div className="question-prompt-en">— and the cards will answer.</div>
+              <p className="question-hint">問題越具體，啟示越清晰。塔羅不擅長回答「會不會」，</p>
+              <p className="question-hint">它擅長回答「為什麼」、「如何」、「現在」。</p>
+              <button
+                className="btn-primary"
+                style={{ marginTop: 40 }}
+                disabled={!question.trim()}
+                onClick={() => setStep('shuffle')}
+              >
+                確認問題 · 進入洗牌 →
+              </button>
+            </div>
+            <div>
+              <div className="question-input-wrap">
+                <Eyebrow>YOUR INQUIRY</Eyebrow>
+                <textarea
+                  className="question-input"
+                  placeholder="例如：在這份工作裡，我真正在追尋的是什麼？"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value.slice(0, 140))}
+                  style={{ marginTop: 16 }}
+                />
+                <div className="question-counter">
+                  <span>{question.length} / 140</span>
+                  <span>{spread.name} · {spread.count} CARDS</span>
+                </div>
+              </div>
+              <div className="question-suggestions">
+                {[
+                  '我此刻最需要看見什麼？',
+                  '與 ___ 的關係將走向何處？',
+                  '這個決定背後我真正在害怕什麼？',
+                  '本月我的核心課題是什麼？',
+                  '靈魂層面想要對我說什麼？',
+                ].map((q) => (
+                  <button key={q} className="question-chip" onClick={() => setQuestion(q)}>{q}</button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -137,7 +175,7 @@ function ReadingView({ spread, onComplete, onNav }) {
               CHOOSE {spread.count} CARDS · {picked.length} / {spread.count} SELECTED
             </div>
 
-            {/* 扇形牌堆 (已修復 inline-style 展開效果) */}
+            {/* 扇形牌堆 */}
             <div className="fan-container">
               {drawn.map((card, i) => {
                 const total = drawn.length;
@@ -156,7 +194,7 @@ function ReadingView({ spread, onComplete, onNav }) {
               })}
             </div>
 
-            {/* 托盤 (已修復) */}
+            {/* 托盤 */}
             <div className="picked-tray">
               {Array.from({ length: spread.count }).map((_, i) => (
                 <div key={i} className="picked-slot">
