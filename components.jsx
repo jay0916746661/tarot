@@ -4,8 +4,36 @@
 
 const { useState, useEffect, useRef, useMemo } = React;
 
-// ───── 塔羅牌正面（程式繪製，不依賴外部圖） ─────
+// Rider-Waite-Smith 公版圖（1909，無版權）— Wikimedia Commons
+const WIKI_FILES = [
+  'RWS_Tarot_00_Fool.jpg',
+  'RWS_Tarot_01_Magician.jpg',
+  'RWS_Tarot_02_High_Priestess.jpg',
+  'RWS_Tarot_03_Empress.jpg',
+  'RWS_Tarot_04_Emperor.jpg',
+  'RWS_Tarot_05_Hierophant.jpg',
+  'RWS_Tarot_06_Lovers.jpg',
+  'RWS_Tarot_07_Chariot.jpg',
+  'RWS_Tarot_08_Strength.jpg',
+  'RWS_Tarot_09_Hermit.jpg',
+  'RWS_Tarot_10_Wheel_of_Fortune.jpg',
+  'RWS_Tarot_11_Justice.jpg',
+  'RWS_Tarot_12_Hanged_Man.jpg',
+  'RWS_Tarot_13_Death.jpg',
+  'RWS_Tarot_14_Temperance.jpg',
+  'RWS_Tarot_15_Devil.jpg',
+  'RWS_Tarot_16_Tower.jpg',
+  'RWS_Tarot_17_Star.jpg',
+  'RWS_Tarot_18_Moon.jpg',
+  'RWS_Tarot_19_Sun.jpg',
+  'RWS_Tarot_20_Judgement.jpg',
+  'RWS_Tarot_21_World.jpg',
+];
+
+// ───── 塔羅牌正面 ─────
 function TarotCard({ card, reversed, size = 'md', faceDown = false, onClick, style, className = '' }) {
+  const [imgErr, setImgErr] = useState(false);
+
   const sizes = {
     xs: { w: 60,  h: 100, fs: 9 },
     sm: { w: 90,  h: 150, fs: 11 },
@@ -29,6 +57,12 @@ function TarotCard({ card, reversed, size = 'md', faceDown = false, onClick, sty
     );
   }
 
+  const imgFile = card?.num !== undefined ? WIKI_FILES[card.num] : null;
+  const imgUrl = imgFile
+    ? `https://commons.wikimedia.org/wiki/Special:FilePath/${imgFile}`
+    : null;
+  const useImg = !!imgUrl && !imgErr;
+
   return (
     <div
       className={`tarot-card ${reversed ? 'reversed' : ''} ${className}`}
@@ -36,15 +70,50 @@ function TarotCard({ card, reversed, size = 'md', faceDown = false, onClick, sty
       style={{ width: s.w, height: s.h, ...style }}
     >
       <div className="tarot-inner" style={{ transform: reversed ? 'rotate(180deg)' : 'none' }}>
-        <div className="tarot-corner tl">{card?.glyph}</div>
-        <div className="tarot-corner br">{card?.glyph}</div>
+
+        {/* Rider-Waite 圖：全幅鋪滿 */}
+        {useImg && (
+          <img
+            src={imgUrl}
+            alt={card?.name}
+            onError={() => setImgErr(true)}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'top center',
+              borderRadius: '5px',
+            }}
+          />
+        )}
+
+        {/* 底部漸層：讓牌名文字可讀 */}
+        {useImg && (
+          <div style={{
+            position: 'absolute',
+            bottom: 0, left: 0, right: 0,
+            height: '36%',
+            background: 'linear-gradient(to bottom, transparent, rgba(6,3,18,0.96))',
+            borderRadius: '0 0 5px 5px',
+            pointerEvents: 'none',
+            zIndex: 1,
+          }} />
+        )}
+
+        <div className="tarot-corner tl" style={{ zIndex: 2 }}>{card?.glyph}</div>
+        <div className="tarot-corner br" style={{ zIndex: 2 }}>{card?.glyph}</div>
+
+        {/* 無圖時用原 SVG 備案 */}
         <div className="tarot-art">
-          <CardGlyph card={card} size={s.w} />
+          {!useImg && <CardGlyph card={card} size={s.w} />}
         </div>
-        <div className="tarot-name" style={{ fontSize: s.fs }}>
+
+        <div className="tarot-name" style={{ fontSize: s.fs, position: 'relative', zIndex: 2 }}>
           {card?.name}
         </div>
-        <div className="tarot-name-en" style={{ fontSize: s.fs * 0.65 }}>
+        <div className="tarot-name-en" style={{ fontSize: s.fs * 0.65, position: 'relative', zIndex: 2 }}>
           {card?.en}
         </div>
       </div>
