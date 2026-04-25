@@ -13,6 +13,8 @@
   display: flex;
   flex-direction: column;
   padding: 24px 0;
+  overflow: hidden;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(20px);
 }
 
@@ -135,6 +137,7 @@
   min-height: 100vh;
   position: relative;
   z-index: 1;
+  transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .view-container {
@@ -1398,6 +1401,48 @@
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   算牌 / 解讀時側欄自動縮起 (桌面專用)
+   使用 :has() 偵測 data-screen-label 屬性
+   ============================================================ */
+@media (min-width: 769px) {
+  /* 縮起至 52px（只剩圖示） */
+  body:has(.canvas[data-screen-label="reading"]) .orbit-nav,
+  body:has(.canvas[data-screen-label="result"]) .orbit-nav {
+    width: 52px;
+  }
+  body:has(.canvas[data-screen-label="reading"]) .canvas,
+  body:has(.canvas[data-screen-label="result"]) .canvas {
+    margin-left: 52px;
+  }
+
+  /* 隱藏所有文字，只保留圖示 */
+  body:has(.canvas[data-screen-label="reading"]) .orbit-tc,
+  body:has(.canvas[data-screen-label="reading"]) .orbit-en,
+  body:has(.canvas[data-screen-label="reading"]) .orbit-num,
+  body:has(.canvas[data-screen-label="reading"]) .orbit-brand-tc,
+  body:has(.canvas[data-screen-label="reading"]) .orbit-brand-en,
+  body:has(.canvas[data-screen-label="reading"]) .orbit-foot,
+  body:has(.canvas[data-screen-label="reading"]) .orbit-line,
+  body:has(.canvas[data-screen-label="result"]) .orbit-tc,
+  body:has(.canvas[data-screen-label="result"]) .orbit-en,
+  body:has(.canvas[data-screen-label="result"]) .orbit-num,
+  body:has(.canvas[data-screen-label="result"]) .orbit-brand-tc,
+  body:has(.canvas[data-screen-label="result"]) .orbit-brand-en,
+  body:has(.canvas[data-screen-label="result"]) .orbit-foot,
+  body:has(.canvas[data-screen-label="result"]) .orbit-line {
+    display: none;
+  }
+
+  /* active 指示線改回左側（覆蓋手機版的 top 設定） */
+  body:has(.canvas[data-screen-label="reading"]) .orbit-item.active::before,
+  body:has(.canvas[data-screen-label="result"]) .orbit-item.active::before {
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 2px; height: 24px;
+  }
 }
 
 /* ============================================================
