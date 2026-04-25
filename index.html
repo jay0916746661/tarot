@@ -1,118 +1,41 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>靈樞 Lumen Arcana · 塔羅占卜平台</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="views.css" />
+<script type="text/babel">
+  const { useState, useEffect } = React;
 
-  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+  // 簡化 AI 狀態，不再預載 4GB
+  window.tarotAI = { status: 'cloud' }; 
 
-  <script src="data.js"></script>
-  <script type="text/babel" src="components.jsx"></script>
-  <script type="text/babel" src="views-extra.jsx"></script>
-  <script type="text/babel" src="views-main.jsx"></script>
-  <script type="text/babel" src="tweaks-panel.jsx"></script>
-</head>
-<body>
-  <div id="root"></div>
+  function App() {
+    const [view, setView] = useState('home');
+    const [spread, setSpread] = useState(null);
+    const [result, setResult] = useState(null);
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
-
-    // 全域變數，用來存放 AI 引擎與下載進度
-    window.tarotAI = {
-      engine: null,
-      progress: 0,
-      status: 'init'
-    };
-
-    function App() {
-      const [view, setView] = useState('home');
-      const [spread, setSpread] = useState(null);
-      const [result, setResult] = useState(null);
-      const [aiProgress, setAiProgress] = useState(0);
-
-      // 一進網頁就啟動背景下載
-      useEffect(() => {
-        const initAI = async () => {
-          try {
-            const webllm = await import('https://esm.run/@mlc-ai/web-llm');
-            const selectedModel = 'Llama-3-8B-Instruct-q4f32_1-MLC';
-            
-            window.tarotAI.status = 'loading';
-            const engine = await webllm.CreateMLCEngine(selectedModel, {
-              initProgressCallback: (info) => {
-                // 抓取進度數字
-                const match = info.text.match(/(\d+)%/);
-                if (match) {
-                  const p = parseInt(match[1]);
-                  window.tarotAI.progress = p;
-                  setAiProgress(p); // 讓 UI 同步更新
-                }
-              }
-            });
-
-            window.tarotAI.engine = engine;
-            window.tarotAI.status = 'ready';
-            console.log("AI 靈魂召喚完成");
-          } catch (e) {
-            console.error("WebGPU 不支援或下載失敗", e);
-            window.tarotAI.status = 'error';
-          }
-        };
-
-        initAI();
-      }, []);
-
-      return (
-        <>
-          <FloatingDust />
-          <OrbitNav current={view} onNav={setView} />
-          
-          {/* 背景下載提示燈 */}
-          <div style={{
-            position: 'fixed', bottom: 20, left: 110, zIndex: 100,
-            display: 'flex', alignItems: 'center', gap: 10,
-            fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--mist)'
-          }}>
-            <div style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: aiProgress === 100 ? '#4caf50' : '#ff9800',
-              boxShadow: aiProgress === 100 ? '0 0 10px #4caf50' : '0 0 10px #ff9800'
-            }} />
-            {aiProgress < 100 ? `星辰之力凝聚中 ${aiProgress}%` : '核心已覺醒 · AI READY'}
-          </div>
-
-          <div className="canvas" data-screen-label={view}>
-            {view === 'home' && <HomeView onNav={setView} />}
-            {view === 'spreads' && <SpreadsView onNav={setView} onSelectSpread={setSpread} />}
-            {view === 'reading' && (
-              <ReadingView
-                spread={spread}
-                onNav={setView}
-                onComplete={(r) => { setResult(r); setView('result'); }}
-              />
-            )}
-            {view === 'result' && (
-              <ResultView
-                result={result}
-                onNav={setView}
-                onNew={() => { setResult(null); setSpread(null); setView('spreads'); }}
-              />
-            )}
-            {view === 'daily' && <DailyView onNav={setView} />}
-            {view === 'codex' && <CodexView /> }
-            {view === 'archive' && <ArchiveView onNav={setView} />}
-          </div>
-        </>
-      );
-    }
-
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
-</body>
-</html>
+    return (
+      <>
+        <FloatingDust />
+        <OrbitNav current={view} onNav={setView} />
+        <div className="canvas" data-screen-label={view}>
+          {view === 'home' && <HomeView onNav={setView} />}
+          {view === 'spreads' && <SpreadsView onNav={setView} onSelectSpread={setSpread} />}
+          {view === 'reading' && (
+            <ReadingView
+              spread={spread}
+              onNav={setView}
+              onComplete={(r) => { setResult(r); setView('result'); }}
+            />
+          )}
+          {view === 'result' && (
+            <ResultView
+              result={result}
+              onNav={setView}
+              onNew={() => { setResult(null); setSpread(null); setView('spreads'); }}
+            />
+          )}
+          {view === 'daily' && <DailyView onNav={setView} />}
+          {view === 'codex' && <CodexView /> }
+          {view === 'archive' && <ArchiveView onNav={setView} />}
+        </div>
+      </>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
