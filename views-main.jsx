@@ -253,15 +253,10 @@ function ReadingView({ spread, onComplete, onNav }) {
   const [selectedCat, setSelectedCat] = uS('self');
   const fanCount = 22;
 
-  uE(() => {
-    if (step === 'shuffle') {
-      const t = setTimeout(() => {
-        setDrawn(drawCards(fanCount, Date.now()));
-        setStep('cut');
-      }, 2000);
-      return () => clearTimeout(t);
-    }
-  }, [step]);
+  const handleStopShuffle = () => {
+    setDrawn(drawCards(fanCount, Date.now()));
+    setStep('cut');
+  };
 
   const handleCut = () => {
     setDrawn(prev => {
@@ -397,10 +392,13 @@ function ReadingView({ spread, onComplete, onNav }) {
         <div className="reading-stage">
           <div className="shuffle-stage">
             <div className="shuffle-question">「{question}」</div>
-            <div className="shuffle-status">SHUFFLING · 洗牌中 · 請靜心呼吸</div>
+            <div className="shuffle-status">SHUFFLING · 洗牌中 · 靜心呼吸，準備好時停下</div>
             <div className="shuffle-deck">
               {[0,1,2,3,4,5].map((i) => <div key={i} className="shuffle-card" />)}
             </div>
+            <button className="btn-primary" style={{ marginTop: 48 }} onClick={handleStopShuffle}>
+              停止洗牌 · 已準備好 →
+            </button>
           </div>
         </div>
       )}
@@ -441,14 +439,17 @@ function ReadingView({ spread, onComplete, onNav }) {
                 const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
                 const angle = ((i - (total - 1) / 2) / total) * (isMobile ? 50 : 60);
                 const offsetX = ((i - (total - 1) / 2) / total) * (isMobile ? 280 : 900);
+                const isPicked = picked.includes(i);
                 return (
                   <div
                     key={i}
-                    className={`fan-card-wrap ${picked.includes(i) ? 'picked' : ''}`}
+                    className={`fan-card-wrap ${isPicked ? 'picked' : ''}`}
                     style={{
                       '--rot': `rotate(${angle}deg) translateX(${offsetX}px)`,
-                      transform: `rotate(${angle}deg) translateX(${offsetX}px)`,
-                      zIndex: i,
+                      transform: isPicked
+                        ? `translateY(-72px) rotate(${angle}deg) translateX(${offsetX}px)`
+                        : `rotate(${angle}deg) translateX(${offsetX}px)`,
+                      zIndex: isPicked ? 50 + i : i,
                     }}
                     onClick={() => togglePick(i)}
                   >
@@ -583,18 +584,25 @@ function ResultView({ result, onNav, onNew }) {
   const date = new Date(ts);
   const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} · ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
-  // 假 AI 整體解讀
+  // 整體解讀（貼近問題與牌位含義）
   const synthesis = uM(() => {
     const dominant = cards[0];
     const last = cards[cards.length - 1];
     const reversedCount = cards.filter((c) => c.reversed).length;
-    return [
-      `從牌面整體浮現的能量來看，這個提問正處於 ${dominant.element} 元素為主導的階段——${dominant.reversed ? '但以內向、潛意識的方式運作' : '以外顯的、可被感知的方式發生'}。`,
-      `「${dominant.name}」於起首位現身，意味著 ${dominant.upright.split('。')[0]}。${reversedCount > 0 ? `其中 ${reversedCount} 張為逆位，這提醒你：答案不在你以為的方向，而在你尚未願意直視的角落。` : '所有牌皆為正位，能量是清明且向外流動的。'}`,
-      `而最終以「${last.name}」收束——這不是預言，而是一個邀請：當你願意以 ${last.element} 的方式回應，事件將自然走向 ${last.reversed ? '一個需要再次審視的轉折' : '一個明朗的階段'}。`,
-      `*記住：牌只是鏡子。它映照的，是你內在已經知道、卻尚未承認的真相。*`,
-    ];
-  }, [cards]);
+    const midCards = cards.slice(1, -1);
+
+    const p1 = `針對「${question}」，牌陣以「${dominant.name}」${dominant.reversed ? '（逆位）' : '（正位）'}開場。在「${spread.positions[0].name}」這個位置，它揭示了${spread.positions[0].meaning}。${dominant.reversed ? `逆位的能量暗示你對這件事的感受仍在向內收縮——有些想法或情緒尚未被承認，但它們就在那裡。` : `正位能量清晰可辨，指出你已具備面對「${question}」的內在資源，只是還沒有充分調動它。`}`;
+
+    const p2 = cards.length > 1
+      ? `${midCards.length > 0 ? `中間的牌——${midCards.map((c, idx) => `「${c.name}」（${spread.positions[idx + 1].name}）`).join('、')}——共同說明了：` : ''}${reversedCount > 0 ? `有 ${reversedCount} 股能量仍是潛伏、尚未顯化的狀態。這通常意味著你的內心比外在行動更早知道答案，只是還在等待一個被看見的時機。` : '整體能量是流動且向外的，沒有明顯的阻礙。這是一個採取行動的好時機，牌給出的是背書，不是警告。'}`
+      : `${reversedCount > 0 ? '逆位的出現提醒你，關於「' + question + '」的答案，需要往內探尋，而非急著在外界尋求確認。' : '正位能量顯示你與這個問題的關係是清明的，你已比自己以為的更準備好了。'}`;
+
+    const p3 = `最終，「${last.name}」在「${spread.positions[spread.positions.length - 1].name}」位收束。針對「${question}」，這張牌指出：${last.reversed ? `此刻還不是最終答案的時刻——「${last.keywords[0]}」的主題在你生命中仍有尚未完成的功課，需要再多一點耐心與誠實。` : `「${last.keywords[0]}」與「${last.keywords[1] || last.element}」是你前進的關鍵字。方向已在牌中清楚呈現，缺少的只是你邁出的那一步。`}`;
+
+    const p4 = `*塔羅不是算命。它是一面鏡子——把你對「${question}」的答案，從潛意識層照進意識裡。你問對了問題，就已經走了一半。*`;
+
+    return [p1, p2, p3, p4];
+  }, [cards, question, spread]);
 
   return (
     <div className="view-container fade-in">

@@ -850,10 +850,11 @@
   transform: var(--rot) translateY(-30px);
 }
 .fan-card-wrap.picked {
-  opacity: 0.3;
-  pointer-events: none;
+  filter: drop-shadow(0 0 10px color-mix(in oklch, var(--gold) 60%, transparent));
 }
-.fan-card-wrap.picked .tarot-card-back { filter: grayscale(60%); }
+.fan-card-wrap.picked .tarot-card-back {
+  border-color: var(--gold);
+}
 
 .picked-tray {
   display: flex;
