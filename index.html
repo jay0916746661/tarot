@@ -7,45 +7,86 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="views.css" />
 
-  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
 
   <script src="data.js"></script>
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="views-extra.jsx"></script>
+  <script type="text/babel" src="views-main.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
 </head>
 <body>
-  <div class="starfield"></div>
-
   <div id="root"></div>
 
-  <script type="text/babel" src="components.jsx"></script>
-  <script type="text/babel" src="tweaks-panel.jsx"></script>
-  <script type="text/babel" src="views-main.jsx"></script>
-  <script type="text/babel" src="views-extra.jsx"></script>
   <script type="text/babel">
     const { useState, useEffect } = React;
+
+    // 全域變數，用來存放 AI 引擎與下載進度
+    window.tarotAI = {
+      engine: null,
+      progress: 0,
+      status: 'init'
+    };
 
     function App() {
       const [view, setView] = useState('home');
       const [spread, setSpread] = useState(null);
       const [result, setResult] = useState(null);
+      const [aiProgress, setAiProgress] = useState(0);
 
+      // 一進網頁就啟動背景下載
       useEffect(() => {
-        const t = document.getElementById('orbit-time');
-        if (t) {
-          const tick = () => {
-            const d = new Date();
-            t.textContent = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-          };
-          tick();
-          setInterval(tick, 30000);
-        }
-      }, [view]);
+        const initAI = async () => {
+          try {
+            const webllm = await import('https://esm.run/@mlc-ai/web-llm');
+            const selectedModel = 'Llama-3-8B-Instruct-q4f32_1-MLC';
+            
+            window.tarotAI.status = 'loading';
+            const engine = await webllm.CreateMLCEngine(selectedModel, {
+              initProgressCallback: (info) => {
+                // 抓取進度數字
+                const match = info.text.match(/(\d+)%/);
+                if (match) {
+                  const p = parseInt(match[1]);
+                  window.tarotAI.progress = p;
+                  setAiProgress(p); // 讓 UI 同步更新
+                }
+              }
+            });
+
+            window.tarotAI.engine = engine;
+            window.tarotAI.status = 'ready';
+            console.log("AI 靈魂召喚完成");
+          } catch (e) {
+            console.error("WebGPU 不支援或下載失敗", e);
+            window.tarotAI.status = 'error';
+          }
+        };
+
+        initAI();
+      }, []);
 
       return (
         <>
           <FloatingDust />
           <OrbitNav current={view} onNav={setView} />
+          
+          {/* 背景下載提示燈 */}
+          <div style={{
+            position: 'fixed', bottom: 20, left: 110, zIndex: 100,
+            display: 'flex', alignItems: 'center', gap: 10,
+            fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--mist)'
+          }}>
+            <div style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: aiProgress === 100 ? '#4caf50' : '#ff9800',
+              boxShadow: aiProgress === 100 ? '0 0 10px #4caf50' : '0 0 10px #ff9800'
+            }} />
+            {aiProgress < 100 ? `星辰之力凝聚中 ${aiProgress}%` : '核心已覺醒 · AI READY'}
+          </div>
+
           <div className="canvas" data-screen-label={view}>
             {view === 'home' && <HomeView onNav={setView} />}
             {view === 'spreads' && <SpreadsView onNav={setView} onSelectSpread={setSpread} />}
@@ -64,7 +105,7 @@
               />
             )}
             {view === 'daily' && <DailyView onNav={setView} />}
-            {view === 'codex' && <CodexView />}
+            {view === 'codex' && <CodexView /> }
             {view === 'archive' && <ArchiveView onNav={setView} />}
           </div>
         </>
