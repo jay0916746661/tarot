@@ -1,41 +1,121 @@
-<script type="text/babel">
-  const { useState, useEffect } = React;
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>靈樞 Lumen Arcana · 塔羅占卜平台</title>
+  
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="views.css" />
 
-  // 簡化 AI 狀態，不再預載 4GB
-  window.tarotAI = { status: 'cloud' }; 
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
 
-  function App() {
-    const [view, setView] = useState('home');
-    const [spread, setSpread] = useState(null);
-    const [result, setResult] = useState(null);
+  <script src="data.js"></script>
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="views-extra.jsx"></script>
+  <script type="text/babel" src="views-main.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+</head>
+<body>
+  <div id="root"></div>
 
-    return (
-      <>
-        <FloatingDust />
-        <OrbitNav current={view} onNav={setView} />
-        <div className="canvas" data-screen-label={view}>
-          {view === 'home' && <HomeView onNav={setView} />}
-          {view === 'spreads' && <SpreadsView onNav={setView} onSelectSpread={setSpread} />}
-          {view === 'reading' && (
-            <ReadingView
-              spread={spread}
-              onNav={setView}
-              onComplete={(r) => { setResult(r); setView('result'); }}
-            />
-          )}
-          {view === 'result' && (
-            <ResultView
-              result={result}
-              onNav={setView}
-              onNew={() => { setResult(null); setSpread(null); setView('spreads'); }}
-            />
-          )}
-          {view === 'daily' && <DailyView onNav={setView} />}
-          {view === 'codex' && <CodexView /> }
-          {view === 'archive' && <ArchiveView onNav={setView} />}
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [view, setView] = useState('home');
+      const [spread, setSpread] = useState(null);
+      const [result, setResult] = useState(null);
+
+      // 導覽功能
+      const handleNav = (targetView) => {
+        setView(targetView);
+        window.scrollTo(0, 0);
+      };
+
+      // 占卜完成處理
+      const handleComplete = (finalResult) => {
+        setResult(finalResult);
+        setView('result');
+        window.scrollTo(0, 0);
+      };
+
+      // 重新占卜處理
+      const handleReset = () => {
+        setResult(null);
+        setSpread(null);
+        setView('spreads');
+        window.scrollTo(0, 0);
+      };
+
+      return (
+        <div className="app-wrapper">
+          {/* 動態背景特效 */}
+          <FloatingDust />
+          
+          {/* 環形導航欄 */}
+          <OrbitNav current={view} onNav={handleNav} />
+          
+          {/* 主內容畫布 */}
+          <main className="canvas" data-screen-label={view}>
+            {view === 'home' && (
+              <HomeView onNav={handleNav} />
+            )}
+            
+            {view === 'spreads' && (
+              <SpreadsView 
+                onNav={handleNav} 
+                onSelectSpread={setSpread} 
+              />
+            )}
+            
+            {view === 'reading' && (
+              <ReadingView
+                spread={spread}
+                onNav={handleNav}
+                onComplete={handleComplete}
+              />
+            )}
+            
+            {view === 'result' && (
+              <ResultView
+                result={result}
+                onNav={handleNav}
+                onNew={handleReset}
+              />
+            )}
+            
+            {view === 'daily' && (
+              <DailyView onNav={handleNav} />
+            )}
+            
+            {view === 'codex' && (
+              <CodexView />
+            )}
+            
+            {view === 'archive' && (
+              <ArchiveView onNav={handleNav} />
+            )}
+          </main>
+
+          {/* 簡單的底部裝飾 */}
+          <footer style={{
+            position: 'fixed', bottom: 20, right: 30, 
+            fontSize: '10px', color: 'var(--mist)', 
+            opacity: 0.5, pointerEvents: 'none',
+            fontFamily: 'var(--mono)'
+          }}>
+            LUMEN ARCANA · VERSION 2.0 · STABLE
+          </footer>
         </div>
-      </>
-    );
-  }
-  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-</script>
+      );
+    }
+
+    // 渲染應用
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
