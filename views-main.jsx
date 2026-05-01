@@ -563,7 +563,7 @@ function PositionCard({ idx, card, pos, size, hideLabel }) {
           <div className="position-label">{pos.name}</div>
         </div>
       )}
-      <TarotCard card={card} reversed={card.reversed} size={size} />
+      <TarotCard card={card} reversed={card.isReversed} size={size} />
     </div>
   );
 }
@@ -584,25 +584,83 @@ function ResultView({ result, onNav, onNew }) {
   const date = new Date(ts);
   const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} · ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
-  // 整體解讀（貼近問題與牌位含義）
-  const synthesis = uM(() => {
+  // 靜態解讀（無 API Key 時的備用）
+  const staticSynthesis = uM(() => {
     const dominant = cards[0];
     const last = cards[cards.length - 1];
-    const reversedCount = cards.filter((c) => c.reversed).length;
+    const reversedCount = cards.filter((c) => c.isReversed).length;
     const midCards = cards.slice(1, -1);
 
-    const p1 = `針對「${question}」，牌陣以「${dominant.name}」${dominant.reversed ? '（逆位）' : '（正位）'}開場。在「${spread.positions[0].name}」這個位置，它揭示了${spread.positions[0].meaning}。${dominant.reversed ? `逆位的能量暗示你對這件事的感受仍在向內收縮——有些想法或情緒尚未被承認，但它們就在那裡。` : `正位能量清晰可辨，指出你已具備面對「${question}」的內在資源，只是還沒有充分調動它。`}`;
+    const p1 = `針對「${question}」，牌陣以「${dominant.name}」${dominant.isReversed ? '（逆位）' : '（正位）'}開場。在「${spread.positions[0].name}」這個位置，它揭示了${spread.positions[0].meaning}。${dominant.isReversed ? `逆位的能量暗示你對這件事的感受仍在向內收縮——有些想法或情緒尚未被承認，但它們就在那裡。` : `正位能量清晰可辨，指出你已具備面對「${question}」的內在資源，只是還沒有充分調動它。`}`;
 
     const p2 = cards.length > 1
       ? `${midCards.length > 0 ? `中間的牌——${midCards.map((c, idx) => `「${c.name}」（${spread.positions[idx + 1].name}）`).join('、')}——共同說明了：` : ''}${reversedCount > 0 ? `有 ${reversedCount} 股能量仍是潛伏、尚未顯化的狀態。這通常意味著你的內心比外在行動更早知道答案，只是還在等待一個被看見的時機。` : '整體能量是流動且向外的，沒有明顯的阻礙。這是一個採取行動的好時機，牌給出的是背書，不是警告。'}`
       : `${reversedCount > 0 ? '逆位的出現提醒你，關於「' + question + '」的答案，需要往內探尋，而非急著在外界尋求確認。' : '正位能量顯示你與這個問題的關係是清明的，你已比自己以為的更準備好了。'}`;
 
-    const p3 = `最終，「${last.name}」在「${spread.positions[spread.positions.length - 1].name}」位收束。針對「${question}」，這張牌指出：${last.reversed ? `此刻還不是最終答案的時刻——「${last.keywords[0]}」的主題在你生命中仍有尚未完成的功課，需要再多一點耐心與誠實。` : `「${last.keywords[0]}」與「${last.keywords[1] || last.element}」是你前進的關鍵字。方向已在牌中清楚呈現，缺少的只是你邁出的那一步。`}`;
+    const p3 = `最終，「${last.name}」在「${spread.positions[spread.positions.length - 1].name}」位收束。針對「${question}」，這張牌指出：${last.isReversed ? `此刻還不是最終答案的時刻——「${last.keywords[0]}」的主題在你生命中仍有尚未完成的功課，需要再多一點耐心與誠實。` : `「${last.keywords[0]}」與「${last.keywords[1] || last.element}」是你前進的關鍵字。方向已在牌中清楚呈現，缺少的只是你邁出的那一步。`}`;
 
     const p4 = `*塔羅不是算命。它是一面鏡子——把你對「${question}」的答案，從潛意識層照進意識裡。你問對了問題，就已經走了一半。*`;
 
     return [p1, p2, p3, p4];
   }, [cards, question, spread]);
+
+  // AI 解讀
+  const [aiSynthesis, setAiSynthesis] = uS(null);
+  const [isLoading, setIsLoading] = uS(false);
+
+  uE(() => {
+    const apiKey = localStorage.getItem('tarot_claude_key') || '';
+    if (!apiKey) return;
+
+    setIsLoading(true);
+    setAiSynthesis(null);
+
+    const cardLines = cards.map((c, i) =>
+      `位置${i + 1}「${spread.positions[i].name}」（${spread.positions[i].meaning}）\n` +
+      `牌：${c.name}（${c.isReversed ? '逆位' : '正位'}）\n` +
+      `牌義：${c.isReversed ? c.reversed : c.upright}`
+    ).join('\n\n');
+
+    const prompt =
+      `你是一位精通塔羅的解讀師。\n\n` +
+      `【使用者的問題】\n${question}\n\n` +
+      `【牌陣】${spread.name}\n\n` +
+      `【抽到的牌】\n${cardLines}\n\n` +
+      `請寫 4 段解讀（每段 80-120 字），用繁體中文，風格神秘詩意，` +
+      `但每段都必須具體回應「${question}」這個問題：\n` +
+      `第1段：第一張牌如何呼應問題核心\n` +
+      `第2段：中間牌的能量流動（單張牌陣則深入探討這張牌）\n` +
+      `第3段：最後一張牌的指引方向\n` +
+      `第4段：整合所有牌，給出針對問題的具體建議\n\n` +
+      `直接輸出4段文字，段落間空一行，不加標題或符號。`;
+
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) throw new Error(data.error.message);
+        const text = data.content?.[0]?.text || '';
+        setAiSynthesis(text.split('\n\n').filter((p) => p.trim()));
+      })
+      .catch((err) => {
+        setAiSynthesis([`AI 解讀失敗：${err.message || '請確認 API Key 是否正確'}`]);
+      })
+      .finally(() => setIsLoading(false));
+  }, [cards, question, spread]);
+
+  const synthesis = aiSynthesis || staticSynthesis;
 
   return (
     <div className="view-container fade-in">
@@ -623,7 +681,7 @@ function ResultView({ result, onNav, onNew }) {
         <div className="result-question">{question}</div>
         <div className="result-meta">
           <div>SEED · {String(ts).slice(-6)}</div>
-          <div>{cards.filter((c) => c.reversed).length} REVERSED</div>
+          <div>{cards.filter((c) => c.isReversed).length} REVERSED</div>
         </div>
       </div>
 
@@ -640,9 +698,15 @@ function ResultView({ result, onNav, onNew }) {
         </div>
         <h3 className="ai-synthesis-title">當 牌 與 牌 相 遇</h3>
         <div className="ai-synthesis-body">
-          {synthesis.map((p, i) => (
-            <p key={i} dangerouslySetInnerHTML={{ __html: p.replace(/\*(.+?)\*/g, '<em>$1</em>') }} />
-          ))}
+          {isLoading ? (
+            <p style={{ color: 'var(--gold)', fontFamily: 'var(--mono)', letterSpacing: '0.2em', fontSize: 13 }}>
+              ✦ &nbsp;星象推演中，請稍候…
+            </p>
+          ) : (
+            synthesis.map((p, i) => (
+              <p key={i} dangerouslySetInnerHTML={{ __html: p.replace(/\*(.+?)\*/g, '<em>$1</em>') }} />
+            ))
+          )}
         </div>
       </div>
 
@@ -651,13 +715,13 @@ function ResultView({ result, onNav, onNew }) {
         <div className="interpretation-grid" style={{ marginTop: 32 }}>
           {cards.map((c, i) => (
             <div key={i} className="interp-card-detail" style={{ display: 'flex', gap: 32 }}>
-              <TarotCard card={c} reversed={c.reversed} size="sm" />
+              <TarotCard card={c} reversed={c.isReversed} size="sm" />
               <div style={{ flex: 1 }}>
                 <div className="interp-pos-tag">{String(i + 1).padStart(2, '0')} · {spread.positions[i].name}</div>
                 <h4 className="interp-card-name">{c.name}</h4>
                 <div className="interp-card-en">{c.en}</div>
-                <div className={`interp-card-orient ${c.reversed ? 'reversed' : ''}`}>
-                  {c.reversed ? 'REVERSED · 逆位' : 'UPRIGHT · 正位'} · {c.element} · {c.planet}
+                <div className={`interp-card-orient ${c.isReversed ? 'reversed' : ''}`}>
+                  {c.isReversed ? 'REVERSED · 逆位' : 'UPRIGHT · 正位'} · {c.element} · {c.planet}
                 </div>
                 <div className="interp-keywords">
                   {c.keywords.map((k) => <span key={k} className="interp-kw">{k}</span>)}
@@ -667,8 +731,8 @@ function ResultView({ result, onNav, onNew }) {
                   {spread.positions[i].meaning}。
                 </p>
                 <p className="interp-text">
-                  {c.reversed ? c.reversed === true ? c.upright : c.reversed : c.upright}
-                  {c.reversed && <em style={{ color: 'var(--ember)', fontStyle: 'italic' }}>（{c.reversed === true ? '能量內收，需向內觀照' : ''}）</em>}
+                  {c.isReversed ? c.reversed : c.upright}
+                  {c.isReversed && <em style={{ color: 'var(--ember)', fontStyle: 'italic' }}>（能量內收，需向內觀照）</em>}
                 </p>
               </div>
             </div>
