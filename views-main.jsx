@@ -250,8 +250,84 @@ function ReadingView({ spread, onComplete, onNav }) {
   const [question, setQuestion] = uS('');
   const [drawn, setDrawn] = uS([]);
   const [picked, setPicked] = uS([]);
+  const [revealedCards, setRevealedCards] = uS([]);
   const [selectedCat, setSelectedCat] = uS('self');
+  const [isListening, setIsListening] = uS(false);
+  const [voiceStatus, setVoiceStatus] = uS('idle');
+  const [readingTone, setReadingTone] = uS('gentle');
+  const recognitionRef = uR(null);
   const fanCount = 22;
+  const SpeechRecognition = typeof window !== 'undefined'
+    ? (window.SpeechRecognition || window.webkitSpeechRecognition)
+    : null;
+
+  uE(() => () => recognitionRef.current?.stop(), []);
+
+  const handleVoiceInput = () => {
+    if (!SpeechRecognition) {
+      setVoiceStatus('unsupported');
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      setVoiceStatus('stopped');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'zh-TW';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognitionRef.current = recognition;
+    let finalTranscript = question.trim();
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setVoiceStatus('listening');
+    };
+    recognition.onresult = (event) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const transcript = event.results[i][0].transcript.trim();
+        if (event.results[i].isFinal) {
+          finalTranscript = `${finalTranscript} ${transcript}`.trim();
+        } else {
+          interim = transcript;
+        }
+      }
+      setQuestion(`${finalTranscript}${interim ? ` ${interim}` : ''}`.slice(0, 140));
+    };
+    recognition.onerror = (event) => {
+      setIsListening(false);
+      setVoiceStatus(event.error === 'not-allowed' ? 'denied' : 'error');
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+      setVoiceStatus((current) => current === 'listening' ? 'stopped' : current);
+    };
+    recognition.start();
+  };
+
+  const downloadQuestionText = () => {
+    if (!question.trim()) return;
+    const blob = new Blob([question.trim()], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `lumen-inquiry-${new Date().toISOString().slice(0, 10)}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const voiceStatusText = {
+    idle: '語音輸入會自動轉成提問文字',
+    listening: '正在聆聽，說完可再點一次停止',
+    stopped: '語音已轉入文字，可再修一下句子',
+    unsupported: '此瀏覽器不支援語音辨識，GitHub Pages HTTPS 上較穩定',
+    denied: '麥克風權限被拒絕，請在瀏覽器允許麥克風',
+    error: '語音辨識暫時失敗，請再試一次',
+  };
 
   const handleStopShuffle = () => {
     setDrawn(drawCards(fanCount, Date.now()));
@@ -294,10 +370,12 @@ function ReadingView({ spread, onComplete, onNav }) {
       const next = [...picked, idx];
       setPicked(next);
       if (next.length === spread.count) {
+        const finalCards = next.map((i) => drawn[i]);
+        setRevealedCards(finalCards);
+        setStep('reveal');
         setTimeout(() => {
-          const finalCards = next.map((i) => drawn[i]);
-          onComplete({ spread, question, cards: finalCards, ts: Date.now() });
-        }, 800);
+          onComplete({ spread, question, category: selectedCat, readingTone, cards: finalCards, ts: Date.now() });
+        }, 1800);
       }
     }
   };
@@ -356,8 +434,42 @@ function ReadingView({ spread, onComplete, onNav }) {
                   <span>{question.length} / 140</span>
                   <span>{spread.name} · {spread.count} CARDS</span>
                 </div>
+                <div className="voice-tools">
+                  <button
+                    className={`voice-tool-btn ${isListening ? 'active' : ''}`}
+                    onClick={handleVoiceInput}
+                    type="button"
+                  >
+                    {isListening ? '停止錄音' : '語音提問'}
+                  </button>
+                  <button
+                    className="voice-tool-btn"
+                    onClick={downloadQuestionText}
+                    disabled={!question.trim()}
+                    type="button"
+                  >
+                    下載文字檔
+                  </button>
+                  <span className="voice-tool-status">{voiceStatusText[voiceStatus]}</span>
+                </div>
               </div>
               <div className="question-cat-panel">
+                <div className="question-tone-panel">
+                  <div className="question-tone-label">解讀語氣 · READING TONE</div>
+                  <div className="question-tone-options">
+                    {Object.entries(READING_TONES).map(([id, tone]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        className={`question-tone-btn ${readingTone === id ? 'active' : ''}`}
+                        onClick={() => setReadingTone(id)}
+                      >
+                        <span>{tone.label}</span>
+                        <small>{tone.en}</small>
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="question-cats">
                   {QUESTION_CATEGORIES.map(cat => (
                     <button
@@ -474,6 +586,24 @@ function ReadingView({ spread, onComplete, onNav }) {
           </div>
         </div>
       )}
+
+      {step === 'reveal' && (
+        <div className="reading-stage">
+          <div className="reveal-stage">
+            <Eyebrow>04 · REVEAL · 揭 牌</Eyebrow>
+            <div className="reveal-question">「{question}」</div>
+            <div className="reveal-grid" style={{ '--reveal-count': revealedCards.length }}>
+              {revealedCards.map((card, i) => (
+                <div key={`${card.num}-${i}`} className="reveal-card-wrap" style={{ animationDelay: `${i * 0.12}s` }}>
+                  <div className="reveal-position">{String(i + 1).padStart(2, '0')} · {spread.positions[i].name}</div>
+                  <TarotCard card={card} reversed={card.isReversed} size={revealedCards.length > 5 ? 'xs' : 'sm'} />
+                </div>
+              ))}
+            </div>
+            <div className="reveal-status">READING THE PATTERN · 牌義正在交會</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -585,24 +715,8 @@ function ResultView({ result, onNav, onNew }) {
   const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} · ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
   // 靜態解讀（無 API Key 時的備用）
-  const staticSynthesis = uM(() => {
-    const dominant = cards[0];
-    const last = cards[cards.length - 1];
-    const reversedCount = cards.filter((c) => c.isReversed).length;
-    const midCards = cards.slice(1, -1);
-
-    const p1 = `針對「${question}」，牌陣以「${dominant.name}」${dominant.isReversed ? '（逆位）' : '（正位）'}開場。在「${spread.positions[0].name}」這個位置，它揭示了${spread.positions[0].meaning}。${dominant.isReversed ? `逆位的能量暗示你對這件事的感受仍在向內收縮——有些想法或情緒尚未被承認，但它們就在那裡。` : `正位能量清晰可辨，指出你已具備面對「${question}」的內在資源，只是還沒有充分調動它。`}`;
-
-    const p2 = cards.length > 1
-      ? `${midCards.length > 0 ? `中間的牌——${midCards.map((c, idx) => `「${c.name}」（${spread.positions[idx + 1].name}）`).join('、')}——共同說明了：` : ''}${reversedCount > 0 ? `有 ${reversedCount} 股能量仍是潛伏、尚未顯化的狀態。這通常意味著你的內心比外在行動更早知道答案，只是還在等待一個被看見的時機。` : '整體能量是流動且向外的，沒有明顯的阻礙。這是一個採取行動的好時機，牌給出的是背書，不是警告。'}`
-      : `${reversedCount > 0 ? '逆位的出現提醒你，關於「' + question + '」的答案，需要往內探尋，而非急著在外界尋求確認。' : '正位能量顯示你與這個問題的關係是清明的，你已比自己以為的更準備好了。'}`;
-
-    const p3 = `最終，「${last.name}」在「${spread.positions[spread.positions.length - 1].name}」位收束。針對「${question}」，這張牌指出：${last.isReversed ? `此刻還不是最終答案的時刻——「${last.keywords[0]}」的主題在你生命中仍有尚未完成的功課，需要再多一點耐心與誠實。` : `「${last.keywords[0]}」與「${last.keywords[1] || last.element}」是你前進的關鍵字。方向已在牌中清楚呈現，缺少的只是你邁出的那一步。`}`;
-
-    const p4 = `*塔羅不是算命。它是一面鏡子——把你對「${question}」的答案，從潛意識層照進意識裡。你問對了問題，就已經走了一半。*`;
-
-    return [p1, p2, p3, p4];
-  }, [cards, question, spread]);
+  const staticSynthesis = uM(() => buildHumanSynthesis(result), [result]);
+  const followUps = uM(() => buildFollowUpQuestions(result), [result]);
 
   // AI 解讀
   const [aiSynthesis, setAiSynthesis] = uS(null);
@@ -626,13 +740,14 @@ function ResultView({ result, onNav, onNew }) {
       `【使用者的問題】\n${question}\n\n` +
       `【牌陣】${spread.name}\n\n` +
       `【抽到的牌】\n${cardLines}\n\n` +
-      `請寫 4 段解讀（每段 80-120 字），用繁體中文，風格神秘詩意，` +
+      `請寫 5 段解讀（每段 70-110 字），用繁體中文，像真人塔羅師口語說明，` +
       `但每段都必須具體回應「${question}」這個問題：\n` +
-      `第1段：第一張牌如何呼應問題核心\n` +
-      `第2段：中間牌的能量流動（單張牌陣則深入探討這張牌）\n` +
-      `第3段：最後一張牌的指引方向\n` +
-      `第4段：整合所有牌，給出針對問題的具體建議\n\n` +
-      `直接輸出4段文字，段落間空一行，不加標題或符號。`;
+      `第1段：先判斷這個問題真正想問的是什麼，不要只講牌義\n` +
+      `第2段：第一張牌如何貼到使用者的現況\n` +
+      `第3段：中間牌的能量流動（單張牌陣則深入探討這張牌）\n` +
+      `第4段：最後一張牌的指引方向\n` +
+      `第5段：給出非常具體、可執行、像人會說的建議\n\n` +
+      `請避免教科書式牌義，不要說空泛的「宇宙能量」，直接輸出5段文字，段落間空一行，不加標題或符號。`;
 
     fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -661,6 +776,102 @@ function ResultView({ result, onNav, onNew }) {
   }, [cards, question, spread]);
 
   const synthesis = aiSynthesis || staticSynthesis;
+  const [saveState, setSaveState] = uS('idle');
+  const [availableVoices, setAvailableVoices] = uS([]);
+  const [selectedVoiceURI, setSelectedVoiceURI] = uS('');
+  const [isSpeaking, setIsSpeaking] = uS(false);
+
+  const readingVoiceText = [
+    `你的問題是：${question}`,
+    `這次使用${spread.name}。`,
+    ...synthesis.map((p) => p.replace(/\*(.+?)\*/g, '$1').replace(/<[^>]*>/g, '')),
+  ].join('\n\n');
+
+  uE(() => {
+    if (!('speechSynthesis' in window)) return;
+
+    const scoreVoice = (voice) => {
+      const haystack = `${voice.name} ${voice.lang}`.toLowerCase();
+      let score = 0;
+      if (/zh[-_](tw|hant)/i.test(voice.lang)) score += 80;
+      if (/zh/i.test(voice.lang)) score += 40;
+      if (/siri|premium|enhanced|natural|mei|jia|ting|sin|yue|han/i.test(haystack)) score += 25;
+      if (voice.localService) score += 8;
+      if (/google|compact|default/i.test(haystack)) score -= 6;
+      return score;
+    };
+
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const zhVoices = voices
+        .filter((voice) => /zh|cmn|yue/i.test(`${voice.lang} ${voice.name}`))
+        .sort((a, b) => scoreVoice(b) - scoreVoice(a));
+      const next = zhVoices.length ? zhVoices : voices;
+      setAvailableVoices(next);
+      setSelectedVoiceURI((current) => current || next[0]?.voiceURI || '');
+    };
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    return () => {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
+
+  const shareText = [
+    `靈樞 Lumen Arcana · ${spread.name}`,
+    `問題：${question}`,
+    `牌：${cards.map((c, i) => `${spread.positions[i].name} ${c.name}${c.isReversed ? '（逆位）' : ''}`).join(' / ')}`,
+    `摘要：${synthesis[0]?.replace(/<[^>]*>/g, '') || ''}`,
+  ].join('\n');
+
+  const handleSave = () => {
+    try {
+      saveReadingHistory(result);
+      setSaveState('saved');
+    } catch (err) {
+      console.error(err);
+      setSaveState('error');
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: '靈樞塔羅解讀', text: shareText });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+      }
+      setSaveState('shared');
+    } catch (err) {
+      if (err?.name !== 'AbortError') {
+        console.error(err);
+        setSaveState('share-error');
+      }
+    }
+  };
+
+  const handleSpeak = () => {
+    if (!('speechSynthesis' in window)) return;
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(readingVoiceText);
+    const voice = availableVoices.find((item) => item.voiceURI === selectedVoiceURI);
+    if (voice) utterance.voice = voice;
+    utterance.lang = voice?.lang || 'zh-TW';
+    utterance.rate = 0.86;
+    utterance.pitch = 0.96;
+    utterance.volume = 1;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    setIsSpeaking(true);
+  };
 
   return (
     <div className="view-container fade-in">
@@ -730,6 +941,10 @@ function ResultView({ result, onNav, onNew }) {
                   <strong style={{ color: 'var(--gold)', fontWeight: 500 }}>位置含義 — </strong>
                   {spread.positions[i].meaning}。
                 </p>
+                <p className="interp-text interp-human">
+                  <strong style={{ color: 'var(--gold)', fontWeight: 500 }}>針對你的問題 — </strong>
+                  {buildHumanCardReading(c, spread.positions[i], question, inferQuestionContext(question, result.category))}
+                </p>
                 <p className="interp-text">
                   {c.isReversed ? c.reversed : c.upright}
                   {c.isReversed && <em style={{ color: 'var(--ember)', fontStyle: 'italic' }}>（能量內收，需向內觀照）</em>}
@@ -740,11 +955,68 @@ function ResultView({ result, onNav, onNew }) {
         </div>
       </div>
 
+      <div className="voice-readout-panel">
+        <div>
+          <Eyebrow>VOICE · 語 音 朗 讀</Eyebrow>
+          <div className="voice-readout-title">讓解讀用較自然的中文聲音唸出來</div>
+          <p className="voice-readout-note">
+            會優先使用你裝置裡的中文高品質語音；若覺得太機械，可在 macOS 系統設定下載更自然的 Siri / 中文語音。
+          </p>
+        </div>
+        <div className="voice-readout-controls">
+          <select
+            className="voice-select"
+            value={selectedVoiceURI}
+            onChange={(e) => setSelectedVoiceURI(e.target.value)}
+            disabled={!availableVoices.length || isSpeaking}
+          >
+            {availableVoices.length ? (
+              availableVoices.map((voice) => (
+                <option key={voice.voiceURI} value={voice.voiceURI}>
+                  {voice.name} · {voice.lang}
+                </option>
+              ))
+            ) : (
+              <option>系統尚未提供可用語音</option>
+            )}
+          </select>
+          <button className="btn-primary" onClick={handleSpeak}>
+            {isSpeaking ? '停止朗讀' : '朗讀解讀'}
+          </button>
+        </div>
+      </div>
+
+      <div className="followup-panel">
+        <div>
+          <Eyebrow>FOLLOW-UP · 追 問 建 議</Eyebrow>
+          <div className="followup-title">如果要讓下一次解讀更準，可以接著問</div>
+        </div>
+        <div className="followup-list">
+          {followUps.map((item) => (
+            <button
+              key={item}
+              className="followup-chip"
+              onClick={() => {
+                navigator.clipboard?.writeText(item);
+                setSaveState('copied-question');
+              }}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="result-actions">
         <button className="btn-primary" onClick={onNew}>新的占卜 · New Reading</button>
-        <button className="btn-ghost" onClick={() => onNav('archive')}>儲存至紀錄</button>
-        <button className="btn-ghost">輸出 PDF</button>
-        <button className="btn-ghost">分享</button>
+        <button className="btn-ghost" onClick={handleSave}>
+          {saveState === 'saved' ? '已儲存至紀錄' : saveState === 'error' ? '儲存失敗' : '儲存至紀錄'}
+        </button>
+        <button className="btn-ghost" onClick={() => onNav('archive')}>查看紀錄</button>
+        <button className="btn-ghost" onClick={() => window.print()}>輸出 PDF</button>
+        <button className="btn-ghost" onClick={handleShare}>
+          {saveState === 'shared' ? '已複製 / 分享' : saveState === 'copied-question' ? '已複製追問' : saveState === 'share-error' ? '分享失敗' : '分享'}
+        </button>
       </div>
     </div>
   );

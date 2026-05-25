@@ -292,7 +292,28 @@ function CodexView() {
 
 // ───────────────────── ARCHIVE ─────────────────────
 function ArchiveView({ onNav }) {
-  const [active, setActive] = uS2(HISTORY_FIXTURES[0]);
+  const [history, setHistory] = uS2(() => loadReadingHistory());
+  const entries = history.length ? history : HISTORY_FIXTURES;
+  const [activeId, setActiveId] = uS2(() => entries[0]?.id || null);
+  const active = entries.find((entry) => entry.id === activeId) || entries[0];
+
+  const mostDrawn = uM2(() => {
+    const tally = {};
+    history.forEach((entry) => entry.cards?.forEach((name) => { tally[name] = (tally[name] || 0) + 1; }));
+    return Object.entries(tally).sort((a, b) => b[1] - a[1])[0]?.[0] || '星星';
+  }, [history]);
+
+  const favoriteSpread = uM2(() => {
+    const tally = {};
+    history.forEach((entry) => { tally[entry.spread] = (tally[entry.spread] || 0) + 1; });
+    return Object.entries(tally).sort((a, b) => b[1] - a[1])[0]?.[0] || '時間三象';
+  }, [history]);
+
+  const handleDelete = (id) => {
+    const next = deleteReadingHistory(id);
+    setHistory(next);
+    setActiveId(next[0]?.id || HISTORY_FIXTURES[0]?.id || null);
+  };
 
   return (
     <div className="view-container fade-in">
@@ -303,26 +324,26 @@ function ArchiveView({ onNav }) {
           <div className="view-title-en">The chronicle of your inquiries</div>
         </div>
         <div className="view-header-meta">
-          <div>SINCE 2026.01.15</div>
-          <div>{HISTORY_FIXTURES.length} READINGS</div>
+          <div>{history.length ? 'LOCAL ARCHIVE' : 'SAMPLE ARCHIVE'}</div>
+          <div>{entries.length} READINGS</div>
         </div>
       </header>
 
       <div className="archive-stats">
         <div className="archive-stat">
-          <div className="archive-stat-num">{HISTORY_FIXTURES.length}</div>
+          <div className="archive-stat-num">{entries.length}</div>
           <div className="archive-stat-label">TOTAL READINGS · 總占卜次數</div>
         </div>
         <div className="archive-stat">
-          <div className="archive-stat-num">星星</div>
+          <div className="archive-stat-num">{mostDrawn}</div>
           <div className="archive-stat-label">MOST DRAWN · 最常出現</div>
         </div>
         <div className="archive-stat">
-          <div className="archive-stat-num">時間三象</div>
+          <div className="archive-stat-num">{favoriteSpread}</div>
           <div className="archive-stat-label">FAVORITE SPREAD · 偏好牌陣</div>
         </div>
         <div className="archive-stat">
-          <div className="archive-stat-num">14</div>
+          <div className="archive-stat-num">{history.length ? '本機' : '範例'}</div>
           <div className="archive-stat-label">DAY STREAK · 連續天數</div>
         </div>
       </div>
@@ -331,11 +352,11 @@ function ArchiveView({ onNav }) {
         <div className="archive-timeline">
           <Eyebrow dim>TIMELINE · 時間軸</Eyebrow>
           <div style={{ marginTop: 32 }}>
-            {HISTORY_FIXTURES.map((h) => (
+            {entries.map((h) => (
               <div
                 key={h.id}
                 className={`archive-entry ${active?.id === h.id ? 'active' : ''}`}
-                onClick={() => setActive(h)}
+                onClick={() => setActiveId(h.id)}
               >
                 <span className="archive-date">{h.date} · {h.time}</span>
                 <span className="archive-spread">{h.spread}</span>
@@ -373,8 +394,9 @@ function ArchiveView({ onNav }) {
                 <Eyebrow dim>CARDS DRAWN · 抽出</Eyebrow>
                 <div className="archive-detail-cards" style={{ marginTop: 12 }}>
                   {active.cards.map((c, i) => {
-                    const cardData = MAJOR_ARCANA.find((m) => m.name === c);
-                    return cardData ? <TarotCard key={i} card={cardData} size="xs" /> : null;
+                    const detail = active.cardDetails?.[i];
+                    const cardData = MAJOR_ARCANA.find((m) => m.name === c || m.num === detail?.num);
+                    return cardData ? <TarotCard key={`${c}-${i}`} card={cardData} reversed={detail?.isReversed} size="xs" /> : null;
                   })}
                 </div>
               </div>
@@ -390,8 +412,10 @@ function ArchiveView({ onNav }) {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 32 }}>
-                <button className="btn-ghost" style={{ width: '100%' }}>查看完整解讀</button>
-                <button className="btn-ghost" style={{ width: '100%' }}>標註重要</button>
+                <button className="btn-ghost" style={{ width: '100%' }} onClick={() => onNav('spreads')}>再問一次相似問題</button>
+                {history.length > 0 && (
+                  <button className="btn-ghost" style={{ width: '100%' }} onClick={() => handleDelete(active.id)}>從本機紀錄移除</button>
+                )}
               </div>
             </>
           )}

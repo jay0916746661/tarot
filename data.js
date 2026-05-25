@@ -138,10 +138,279 @@ function drawCards(count, seed) {
   }));
 }
 
+const QUESTION_CONTEXTS = {
+  self: {
+    label: '自我',
+    field: '你和自己的關係',
+    plain: '這題比較像是在問：我現在到底怎麼了、哪裡卡住、下一步要怎麼對自己誠實。',
+    action: '先不要急著變成更好的人，先把真正的感受講清楚。',
+  },
+  love: {
+    label: '感情',
+    field: '關係裡的互動、需求與界線',
+    plain: '這題的重點不是對方到底愛不愛，而是你們之間的能量現在怎麼流動。',
+    action: '先看互動模式，再決定要靠近、溝通，還是拉出界線。',
+  },
+  career: {
+    label: '事業',
+    field: '工作選擇、職涯節奏與成就感',
+    plain: '這題不是只問工作好不好，而是在問這條路有沒有讓你用對力氣。',
+    action: '把焦點放回可執行的下一步，而不是只盯著結果。',
+  },
+  wealth: {
+    label: '財務',
+    field: '安全感、風險與資源配置',
+    plain: '這題表面在問錢，底層常常是在問安全感和風險感。',
+    action: '先降低模糊和衝動，再談擴張。',
+  },
+  wellness: {
+    label: '身心靈',
+    field: '情緒、身體訊號與內在修復',
+    plain: '這題更像身體和情緒在提醒你：某件事已經累積很久。',
+    action: '先照顧能量，再處理事件。',
+  },
+  social: {
+    label: '人際',
+    field: '互信、距離、角色與溝通',
+    plain: '這題在問你和他人之間的距離是不是擺在舒服的位置。',
+    action: '不要只看誰對誰錯，要看這段互動讓你變成什麼樣子。',
+  },
+};
+
+const QUESTION_INTENTS = [
+  { id: 'decision', label: '選擇', test: /(該不該|要不要|是否|值得|可以嗎|能不能|適合|接受|離開|繼續|選擇|決定)/ },
+  { id: 'action', label: '行動', test: /(如何|怎麼|怎樣|下一步|改善|修復|調整|面對|處理|做什麼)/ },
+  { id: 'cause', label: '原因', test: /(為什麼|原因|根源|阻礙|卡住|限制|問題在哪|盲點)/ },
+  { id: 'trend', label: '走向', test: /(未來|走向|發展|結果|接下來|趨勢|會不會|能否)/ },
+];
+
+const READING_TONES = {
+  gentle: {
+    label: '溫柔陪伴',
+    en: 'Gentle',
+    lead: '我會用比較溫柔的方式陪你看這題，先不急著逼自己做決定。',
+    advice: '今天先做一件能讓自己穩下來的小事。',
+  },
+  direct: {
+    label: '直接點破',
+    en: 'Direct',
+    lead: '我會直接一點講：這題真正卡住的地方，可能不是你表面問的那件事。',
+    advice: '把最不想承認的那個答案寫下來，先不要急著美化它。',
+  },
+  practical: {
+    label: '務實行動',
+    en: 'Practical',
+    lead: '我會把這次解讀收斂成可以執行的方向，不讓它只停在感覺。',
+    advice: '把下一步縮到一個 24 小時內能完成的動作。',
+  },
+};
+
+const CARD_HUMAN_LENSES = {
+  0:  { core: '你其實已經站在新階段門口，只是還沒拿到安全感保證。', upright: '可以先小步試，不必等到完全準備好。', reversed: '先別用衝動假裝勇敢，也別用害怕假裝理性。', action: '做一個低風險的嘗試。', watch: '不要把未知直接解讀成危險。' },
+  1:  { core: '你手上不是沒有資源，而是還沒把資源集中成一個明確動作。', upright: '主動開口、整合工具、把想法落地。', reversed: '你可能在懷疑自己，或被漂亮話帶偏。', action: '列出你現在真正能動用的三個資源。', watch: '別把準備工作當成拖延。' },
+  2:  { core: '答案已經在你的直覺裡，只是外界太吵。', upright: '先觀察，不急著表態。', reversed: '你可能明明有感覺，卻一直說服自己不要相信。', action: '留一點安靜時間，把直覺和焦慮分開。', watch: '不要把沉默誤認成沒答案。' },
+  3:  { core: '這件事需要滋養，不是只靠意志硬推。', upright: '讓事情長出來，而不是一直催它快點證明成果。', reversed: '你可能付出過頭，卻忘了自己也需要被照顧。', action: '補回能量、資源和耐心。', watch: '別把照顧別人變成消耗自己。' },
+  4:  { core: '問題需要結構、界線和負責任的決策。', upright: '定規則、排優先順序，別讓事情散掉。', reversed: '太控制或太放任都會讓局面失衡。', action: '把不可退讓的底線寫清楚。', watch: '不要用強硬掩飾不安。' },
+  5:  { core: '你需要一套可依靠的方法，或一個比你有經驗的人。', upright: '傳統、制度、老師或前輩能幫你少走冤枉路。', reversed: '別人的標準不一定適合你，你要分辨哪些規則已經過期。', action: '找一個可信的參照系。', watch: '不要為了合群放棄自己的真實感。' },
+  6:  { core: '這張牌在問：你的選擇有沒有忠於真正的價值觀。', upright: '真誠連結會讓答案變清楚。', reversed: '關係或選擇裡可能有失衡、逃避或自我背叛。', action: '把你真正想要的和正在妥協的分開。', watch: '不要把心動誤認成適合。' },
+  7:  { core: '現在需要方向感，不只是努力。', upright: '目標清楚時，你有能力推進。', reversed: '你可能同時想往太多方向，結果哪裡都到不了。', action: '只選一個主戰場。', watch: '別把硬撐當成掌控。' },
+  8:  { core: '真正的力量不是壓下去，而是穩穩地接住。', upright: '用溫柔但堅定的方式面對。', reversed: '你可能已經累到開始懷疑自己。', action: '先安撫情緒，再談解決。', watch: '不要因為怕衝突就一直退讓。' },
+  9:  { core: '你需要往內找答案，而不是一直問外界認不認可。', upright: '獨處會讓你看見真正重要的線索。', reversed: '你可能把自己關太久，或害怕面對內在聲音。', action: '暫時降低噪音，留下能思考的空間。', watch: '不要把孤立包裝成清醒。' },
+  10: { core: '局勢正在轉動，你能控制的是姿態，不是整個輪子。', upright: '順勢而為，抓住正在開的門。', reversed: '越抗拒變化，越容易卡在同一個循環。', action: '辨認哪個變化已經不可逆。', watch: '不要把暫時不穩看成全盤失敗。' },
+  11: { core: '這題需要誠實、對等和清楚的責任。', upright: '把事實攤開，答案會比想像中簡單。', reversed: '你可能在逃避某個代價，或承受不公平。', action: '回到證據、承諾和邊界。', watch: '不要只挑自己想看的事實。' },
+  12: { core: '卡住不一定是壞事，它可能是在逼你換角度。', upright: '先暫停，答案會從另一個視角浮出來。', reversed: '你可能正在做不必要的犧牲。', action: '問自己：我到底在等什麼？', watch: '不要把拖延說成臣服。' },
+  13: { core: '某個舊模式已經走到尾聲，繼續抓著只會更累。', upright: '結束不是懲罰，是替新階段騰空間。', reversed: '你可能知道該放手，卻還在跟過去談條件。', action: '明確停止一個不再服務你的習慣。', watch: '不要把失去和失敗畫上等號。' },
+  14: { core: '這件事需要調和，不需要極端答案。', upright: '慢慢混合兩邊需求，會出現第三條路。', reversed: '失衡已經很明顯，不能再靠忍耐撐過去。', action: '把節奏調回可長期維持。', watch: '不要用過度配合換和平。' },
+  15: { core: '你以為被困住，但真正的鎖可能是恐懼、慾望或依賴。', upright: '看清楚自己把權力交給了什麼。', reversed: '你正在有機會脫離一個綁住你的模式。', action: '把成癮、執念或不健康依附說出口。', watch: '不要用短暫快感掩蓋長期代價。' },
+  16: { core: '真相正在拆掉不穩的結構。這會痛，但也會清醒。', upright: '不要再替搖搖欲墜的東西補牆。', reversed: '你可能已經看到裂縫，卻還想假裝沒事。', action: '承認哪件事不能再照舊。', watch: '不要把震動都看成壞消息。' },
+  17: { core: '你需要的是重新相信，而不是立刻證明。', upright: '療癒和希望正在回來，給自己一點時間。', reversed: '不是沒有光，是你太累所以看不見。', action: '做一件會讓你恢復信心的小事。', watch: '不要因為失望過就拒絕期待。' },
+  18: { core: '這題有霧，先別急著下定論。', upright: '情緒、恐懼和想像可能混在一起。', reversed: '霧正在散，你會開始看懂之前不懂的地方。', action: '把事實和腦補分成兩欄。', watch: '不要在不清楚時做永久決定。' },
+  19: { core: '這張牌把事情拉回簡單、明亮和生命力。', upright: '你可以更坦率，也可以更相信自己的喜悅。', reversed: '不是沒有好結果，而是你可能被短期低潮遮住。', action: '選擇讓你更有活力的方向。', watch: '不要用過度樂觀跳過細節。' },
+  20: { core: '你正在被提醒：該醒來了，別再用舊版本的自己回答新問題。', upright: '回顧、原諒、整合，然後做出更成熟的選擇。', reversed: '你可能聽到內在召喚，卻怕改變後回不了頭。', action: '承認一件你其實早就知道的事。', watch: '不要用自責代替真正的修正。' },
+  21: { core: '一個循環正在靠近完成，你需要好好收尾。', upright: '整合經驗，讓成果真正落袋。', reversed: '最後一步拖住了，可能是缺少告別或收尾。', action: '完成一個該完成的結尾。', watch: '不要在快完成時突然否定整段路。' },
+};
+
+function inferQuestionContext(question, explicitCategory) {
+  const normalized = question || '';
+  const categoryRules = [
+    ['love', /(感情|愛情|關係|對方|伴侶|復合|分手|喜歡|曖昧|愛|婚|他|她|J)/i],
+    ['career', /(工作|事業|職涯|公司|同事|上司|面試|轉職|離職|升遷|案子|客戶)/i],
+    ['wealth', /(錢|財|投資|收入|支出|存款|債|價格|成本|生意|業績)/i],
+    ['wellness', /(身體|健康|情緒|壓力|焦慮|睡眠|療癒|能量|靈性|平靜)/i],
+    ['social', /(朋友|人際|家人|同學|合作|團隊|溝通|衝突|修復)/i],
+  ];
+  const category = explicitCategory || categoryRules.find(([, rule]) => rule.test(normalized))?.[0] || 'self';
+  const intent = QUESTION_INTENTS.find((item) => item.test.test(normalized)) || { id: 'reflection', label: '看見' };
+  return {
+    category,
+    intent: intent.id,
+    label: QUESTION_CONTEXTS[category]?.label || '自我',
+    intentLabel: intent.label,
+  };
+}
+
+function getPositionTone(positionName, intent) {
+  const pos = positionName || '此刻';
+  if (/過去|根基|隱情|核心/.test(pos)) return '先看這件事背後真正的成因';
+  if (/現在|處境|自我|你|此刻/.test(pos)) return '它正在描述你現在的狀態';
+  if (/行動|建議/.test(pos)) return '它給的是可執行的下一步';
+  if (/挑戰|阻礙|希望恐懼/.test(pos)) return '它指出真正卡住的地方';
+  if (/未來|走向|結果|結局/.test(pos)) return '它不是定論，而是在說照目前節奏會走向哪裡';
+  if (/對方|他人|環境/.test(pos)) return '它把外界或對方的影響拉進來看';
+  if (intent === 'decision') return '它在幫你分辨這個選擇背後的代價';
+  if (intent === 'action') return '它比較像一個行動提醒';
+  if (intent === 'cause') return '它比較像把真正原因翻出來';
+  return '它正在補上這個問題的關鍵視角';
+}
+
+function buildHumanCardReading(card, position, question, contextInfo) {
+  const lens = CARD_HUMAN_LENSES[card.num] || CARD_HUMAN_LENSES[0];
+  const ctx = QUESTION_CONTEXTS[contextInfo.category] || QUESTION_CONTEXTS.self;
+  const orientation = card.isReversed ? lens.reversed : lens.upright;
+  const tone = getPositionTone(position?.name, contextInfo.intent);
+  const bridge = contextInfo.intent === 'decision'
+    ? '所以這不是單純的好或不好，而是要看你願不願意承擔它帶來的改變。'
+    : contextInfo.intent === 'action'
+      ? '所以重點不是想更多，而是把下一步縮小到今天真的做得到。'
+      : contextInfo.intent === 'cause'
+        ? '所以真正的原因可能不在表面事件，而在你一直重複的反應模式。'
+        : '所以它給你的不是預言，而是一個更貼近現況的提醒。';
+
+  return `在「${position?.name || '此刻'}」這個位置，${card.name}${card.isReversed ? '逆位' : '正位'}${tone}。針對「${question}」，我會把它翻成比較白話的說法：${lens.core}${orientation} 放到${ctx.field}裡看，${ctx.plain}${bridge} 你現在可以做的是：${lens.action} 但要小心：${lens.watch}`;
+}
+
+function buildHumanSynthesis(result) {
+  const { spread, question, cards, category, readingTone } = result;
+  const contextInfo = inferQuestionContext(question, category);
+  const ctx = QUESTION_CONTEXTS[contextInfo.category] || QUESTION_CONTEXTS.self;
+  const tone = READING_TONES[readingTone] || READING_TONES.gentle;
+  const reversedCount = cards.filter((c) => c.isReversed).length;
+  const first = cards[0];
+  const last = cards[cards.length - 1];
+  const firstLens = CARD_HUMAN_LENSES[first.num] || CARD_HUMAN_LENSES[0];
+  const lastLens = CARD_HUMAN_LENSES[last.num] || CARD_HUMAN_LENSES[0];
+
+  const opening = `${tone.lead} 你這題我會先放在「${ctx.label}」來看，而且它比較像是在問「${contextInfo.intentLabel}」。所以我不會只說${first.name}代表什麼，而是直接回到你的問題：「${question}」。${ctx.plain}`;
+  const core = `整個牌陣的核心語氣是：${firstLens.core}${first.isReversed ? firstLens.reversed : firstLens.upright} 這表示你現在最需要看見的，不是標準答案，而是你在這件事裡一直重複的姿態。`;
+  const flow = cards.length > 1
+    ? `中間幾張牌把細節攤開：${cards.slice(1, -1).map((card, idx) => `「${card.name}」在${spread.positions[idx + 1].name}`).join('、') || '這是一張牌的直接回應'}。${reversedCount ? `有 ${reversedCount} 張逆位，代表有些能量不是不能動，而是還卡在心裡、關係裡或習慣裡。` : '幾乎都是正位，代表事情已經很清楚，真正差的是行動和承認。'}`
+    : `${first.name}單獨出現時，訊息很集中：它不是叫你把事情想得更玄，而是要你看清楚現在最該面對的那一點。`;
+  const advice = `最後用「${last.name}」收束，我會給你一句比較像真人會說的建議：${lastLens.action} ${last.isReversed ? '先不要逼自己立刻有漂亮答案，逆位比較像在說：你要先把卡住的地方鬆開。' : '如果你照這個方向走，事情不一定立刻完美，但會更接近你的真實狀態。'}`;
+  const close = `總結來說，這副牌不是在替你決定命運，而是在提醒你：${ctx.action} ${tone.advice} 你可以把這次解讀當成一段對話，而不是判決。`;
+  return [opening, core, flow, advice, close];
+}
+
+function buildFollowUpQuestions(result) {
+  const contextInfo = inferQuestionContext(result.question, result.category);
+  const first = result.cards[0];
+  const last = result.cards[result.cards.length - 1];
+  const byIntent = {
+    decision: [
+      `如果我選擇繼續，真正要承擔的代價是什麼？`,
+      `如果我選擇離開，我最害怕失去的是什麼？`,
+    ],
+    action: [
+      `我今天可以做的第一個小步驟是什麼？`,
+      `我現在最該停止的行為模式是什麼？`,
+    ],
+    cause: [
+      `這件事真正的根源是外在事件，還是我的反應模式？`,
+      `我一直看不見的盲點是什麼？`,
+    ],
+    trend: [
+      `如果照目前狀態走下去，三個月後會形成什麼局面？`,
+      `我要改變哪個習慣，才會讓走向不同？`,
+    ],
+    reflection: [
+      `我此刻最需要承認的真相是什麼？`,
+      `這張牌提醒我不要再逃避什麼？`,
+    ],
+  };
+  const contextual = {
+    love: `在這段關係裡，我真正想被怎麼對待？`,
+    career: `這份工作現在是在滋養我，還是在消耗我？`,
+    wealth: `我對金錢的焦慮，真正來自哪一種不安全感？`,
+    wellness: `我的身體或情緒正在替我說出哪句話？`,
+    social: `這段互動裡，我需要重新設定什麼界線？`,
+    self: `如果我不再取悅任何人，我會怎麼選？`,
+  };
+  return [
+    ...(byIntent[contextInfo.intent] || byIntent.reflection),
+    contextual[contextInfo.category],
+    `如果用「${first?.name || '第一張牌'}」到「${last?.name || '最後一張牌'}」當線索，我下一次最適合追問什麼？`,
+  ];
+}
+
 const HISTORY_FIXTURES = [
   { id: 'h7', date: '2026.04.23', time: '23:14', spread: '凱爾特十字', question: '我該接受這個工作機會嗎？', cards: ['命運之輪', '高塔', '星星'], mood: '焦慮 → 釋然', summary: '輪轉已啟動，舊結構崩塌正是新生開始。' },
   { id: 'h6', date: '2026.04.21', time: '08:02', spread: '時間三象', question: '與 J 的關係將走向何處？', cards: ['戀人', '吊人', '太陽'], mood: '困惑', summary: '需要從不同角度看待，光明終將降臨。' },
 ];
+
+const HISTORY_STORAGE_KEY = 'lumen_arcana_reading_history_v1';
+
+function formatReadingDate(ts) {
+  const date = new Date(ts);
+  return {
+    date: `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`,
+    time: `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
+  };
+}
+
+function summarizeReading(result) {
+  const first = result.cards[0];
+  const contextInfo = inferQuestionContext(result.question, result.category);
+  const lens = CARD_HUMAN_LENSES[first?.num] || CARD_HUMAN_LENSES[0];
+  return `這題偏向「${contextInfo.label}／${contextInfo.intentLabel}」。${first?.name || '這張牌'}提醒你：${lens.core}${first?.isReversed ? lens.reversed : lens.upright} 下一步可以先做：${lens.action}`;
+}
+
+function resultToHistoryEntry(result) {
+  const stamped = formatReadingDate(result.ts || Date.now());
+  return {
+    id: `r-${result.ts || Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    ts: result.ts || Date.now(),
+    date: stamped.date,
+    time: stamped.time,
+    spread: result.spread.name,
+    spreadId: result.spread.id,
+    category: result.category || inferQuestionContext(result.question).category,
+    readingTone: result.readingTone || 'gentle',
+    question: result.question,
+    cards: result.cards.map((c) => c.name),
+    cardDetails: result.cards.map((c) => ({
+      num: c.num,
+      name: c.name,
+      isReversed: !!c.isReversed,
+    })),
+    mood: `${result.cards.filter((c) => c.isReversed).length} 張逆位`,
+    summary: summarizeReading(result),
+  };
+}
+
+function loadReadingHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.warn('Unable to load reading history', err);
+    return [];
+  }
+}
+
+function saveReadingHistory(result) {
+  const entry = resultToHistoryEntry(result);
+  const history = loadReadingHistory();
+  const next = [entry, ...history].slice(0, 60);
+  localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next));
+  return entry;
+}
+
+function deleteReadingHistory(id) {
+  const next = loadReadingHistory().filter((entry) => entry.id !== id);
+  localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next));
+  return next;
+}
 
 function getDailyCard() {
   const today = new Date();
@@ -149,4 +418,19 @@ function getDailyCard() {
   return drawCards(1, seed)[0];
 }
 
-Object.assign(window, { MAJOR_ARCANA, SPREADS, drawCards, HISTORY_FIXTURES, getDailyCard });
+Object.assign(window, {
+  MAJOR_ARCANA,
+  SPREADS,
+  drawCards,
+  HISTORY_FIXTURES,
+  getDailyCard,
+  loadReadingHistory,
+  saveReadingHistory,
+  deleteReadingHistory,
+  resultToHistoryEntry,
+  inferQuestionContext,
+  buildHumanCardReading,
+  buildHumanSynthesis,
+  buildFollowUpQuestions,
+  READING_TONES,
+});

@@ -654,6 +654,54 @@
 /* 問題分類面板 */
 .question-cat-panel { margin-top: 20px; }
 
+.question-tone-panel {
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--line-dim);
+  background: color-mix(in oklch, var(--midnight) 86%, transparent);
+}
+.question-tone-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.question-tone-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.question-tone-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--mist);
+  padding: 10px 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.question-tone-btn span {
+  font-family: var(--tc);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+.question-tone-btn small {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.question-tone-btn:hover,
+.question-tone-btn.active {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: color-mix(in oklch, var(--gold) 6%, transparent);
+}
+
 .question-cats {
   display: flex;
   flex-wrap: wrap;
@@ -750,6 +798,45 @@
   text-transform: uppercase;
   display: flex;
   justify-content: space-between;
+}
+.voice-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-dim);
+}
+.voice-tool-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 9px 13px;
+  background: transparent;
+  color: var(--mist);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.voice-tool-btn:hover:not(:disabled),
+.voice-tool-btn.active {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: color-mix(in oklch, var(--gold) 6%, transparent);
+}
+.voice-tool-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.voice-tool-status {
+  flex: 1;
+  min-width: 220px;
+  font-family: var(--tc);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--mist);
 }
 
 /* 洗牌動畫 */
@@ -885,6 +972,59 @@
   color: var(--mist);
   font-style: italic;
   border-radius: 6px;
+}
+
+/* 揭牌過場 */
+.reveal-stage {
+  min-height: calc(100vh - 220px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.reveal-question {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 24px;
+  color: var(--mist);
+  line-height: 1.5;
+  max-width: 760px;
+  margin-top: 20px;
+}
+.reveal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 22px;
+  align-items: start;
+  justify-content: center;
+  margin: 52px auto 28px;
+  width: min(980px, 100%);
+}
+.reveal-card-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  opacity: 0;
+  transform: translateY(24px) rotate(-2deg);
+  animation: reveal-card-in 0.75s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+.reveal-position {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.reveal-status {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--mist);
+  text-transform: uppercase;
+}
+@keyframes reveal-card-in {
+  to { opacity: 1; transform: translateY(0) rotate(0); }
 }
 
 /* ===== 解牌結果 ===== */
@@ -1032,6 +1172,12 @@
   color: var(--parchment);
   margin-bottom: 16px;
 }
+.interp-human {
+  padding: 18px 20px;
+  border-left: 2px solid var(--gold);
+  background: color-mix(in oklch, var(--gold) 5%, transparent);
+  color: var(--gold-soft);
+}
 .interp-keywords {
   display: flex;
   flex-wrap: wrap;
@@ -1106,6 +1252,88 @@
   justify-content: center;
   padding: 32px 0;
   border-top: 1px solid var(--line-dim);
+}
+.voice-readout-panel {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: center;
+  padding: 28px 0;
+  margin-bottom: 24px;
+  border-top: 1px solid var(--line-dim);
+  border-bottom: 1px solid var(--line-dim);
+}
+.voice-readout-title {
+  font-family: var(--tc);
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  color: var(--parchment);
+  margin-top: 10px;
+}
+.voice-readout-note {
+  font-family: var(--tc);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--mist);
+  margin-top: 10px;
+  max-width: 680px;
+}
+.voice-readout-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.voice-select {
+  min-width: 260px;
+  max-width: 360px;
+  background: var(--midnight);
+  border: 1px solid var(--line);
+  color: var(--parchment);
+  font-family: var(--tc);
+  font-size: 13px;
+  padding: 13px 14px;
+  outline: none;
+}
+.voice-select:focus {
+  border-color: var(--gold);
+}
+.followup-panel {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 32px;
+  align-items: start;
+  padding: 28px 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--line-dim);
+}
+.followup-title {
+  font-family: var(--tc);
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  color: var(--parchment);
+  margin-top: 10px;
+}
+.followup-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.followup-chip {
+  text-align: left;
+  background: color-mix(in oklch, var(--midnight) 80%, transparent);
+  border: 1px solid var(--line);
+  color: var(--mist);
+  font-family: var(--tc);
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 13px 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.followup-chip:hover {
+  color: var(--parchment);
+  border-color: var(--gold);
+  background: color-mix(in oklch, var(--gold) 6%, var(--midnight));
 }
 
 /* ===== 每日一牌 ===== */
@@ -1656,6 +1884,11 @@
   .question-input-wrap { padding: 16px; min-height: auto; }
   .question-input { font-size: 16px; min-height: 100px; }
   .question-counter { font-size: 9px; }
+  .question-tone-options { grid-template-columns: 1fr; }
+  .question-tone-btn { flex-direction: row; align-items: center; justify-content: space-between; }
+  .voice-tools { align-items: stretch; gap: 8px; }
+  .voice-tool-btn { flex: 1; padding: 9px 8px; }
+  .voice-tool-status { min-width: 100%; font-size: 11px; }
   .question-suggestions { gap: 6px; margin-top: 16px; }
   .question-chip { font-size: 11px; padding: 7px 12px; }
   .question-cat-btn { min-width: 54px; padding: 8px 10px; }
@@ -1685,6 +1918,15 @@
   .picked-empty { width: 60px; height: 100px; font-size: 14px; }
   .picked-slot-label { font-size: 8px; }
 
+  .reveal-stage { justify-content: flex-start; padding-top: 24px; }
+  .reveal-question { font-size: 16px; margin-top: 12px; }
+  .reveal-grid {
+    grid-template-columns: repeat(3, minmax(72px, 1fr));
+    gap: 12px;
+    margin: 28px auto 18px;
+  }
+  .reveal-position { font-size: 8px; letter-spacing: 0.14em; }
+
   /* ── 解讀結果 ── */
   .reading-result-header { grid-template-columns: 1fr; gap: 12px; }
   .result-question { font-size: 17px; }
@@ -1706,6 +1948,27 @@
   .ai-synthesis-body { font-size: 15px; line-height: 1.8; }
 
   .result-actions { flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .voice-readout-panel {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 22px 0;
+  }
+  .voice-readout-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .voice-select {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+  .followup-panel {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .followup-list {
+    grid-template-columns: 1fr;
+  }
 
   /* ── 每日一牌 ── */
   .daily-stage { grid-template-columns: 1fr; min-height: auto; gap: 24px; }
@@ -1748,4 +2011,29 @@
 
   /* ── 按鈕 ── */
   .btn-primary { padding: 14px 20px; font-size: 10px; }
+}
+
+@media print {
+  body {
+    background: white;
+    color: #1c1724;
+  }
+  .orbit-nav,
+  .floating-dust,
+  .result-actions,
+  footer {
+    display: none !important;
+  }
+  .canvas {
+    margin-left: 0 !important;
+  }
+  .view-container {
+    max-width: none;
+    padding: 24px;
+  }
+  .spread-canvas,
+  .ai-synthesis,
+  .interp-card-detail {
+    break-inside: avoid;
+  }
 }
