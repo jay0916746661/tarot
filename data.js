@@ -341,6 +341,37 @@ function buildFollowUpQuestions(result) {
   ];
 }
 
+function buildActionSteps(result) {
+  const contextInfo = inferQuestionContext(result.question, result.category);
+  const ctx = QUESTION_CONTEXTS[contextInfo.category] || QUESTION_CONTEXTS.self;
+  const first = result.cards[0];
+  const last = result.cards[result.cards.length - 1];
+  const firstLens = CARD_HUMAN_LENSES[first?.num] || CARD_HUMAN_LENSES[0];
+  const lastLens = CARD_HUMAN_LENSES[last?.num] || CARD_HUMAN_LENSES[0];
+  const intentStep = {
+    decision: '先寫下「繼續」和「停止」各自最真實的代價，不要只寫好處。',
+    action: '把問題縮小成一個今天就能完成的動作，不要一次想解決全部。',
+    cause: '找出你最常重複的反應：逃避、討好、硬撐、控制，先圈出一個。',
+    trend: '觀察接下來三天同一件事是否重複出現，重複的地方就是牌提醒你的線索。',
+    reflection: '把你最不想承認但其實知道的那句話寫下來。',
+  };
+
+  return [
+    {
+      title: '先穩住',
+      body: `${ctx.action} ${firstLens.action}`,
+    },
+    {
+      title: '再看清楚',
+      body: intentStep[contextInfo.intent] || intentStep.reflection,
+    },
+    {
+      title: '最後行動',
+      body: `${lastLens.action} 同時記得：${lastLens.watch}`,
+    },
+  ];
+}
+
 const HISTORY_FIXTURES = [
   { id: 'h7', date: '2026.04.23', time: '23:14', spread: '凱爾特十字', question: '我該接受這個工作機會嗎？', cards: ['命運之輪', '高塔', '星星'], mood: '焦慮 → 釋然', summary: '輪轉已啟動，舊結構崩塌正是新生開始。' },
   { id: 'h6', date: '2026.04.21', time: '08:02', spread: '時間三象', question: '與 J 的關係將走向何處？', cards: ['戀人', '吊人', '太陽'], mood: '困惑', summary: '需要從不同角度看待，光明終將降臨。' },
@@ -401,7 +432,7 @@ function loadReadingHistory() {
 function saveReadingHistory(result) {
   const entry = resultToHistoryEntry(result);
   const history = loadReadingHistory();
-  const next = [entry, ...history].slice(0, 60);
+  const next = [entry, ...history.filter((item) => item.ts !== entry.ts)].slice(0, 60);
   localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next));
   return entry;
 }
@@ -432,5 +463,6 @@ Object.assign(window, {
   buildHumanCardReading,
   buildHumanSynthesis,
   buildFollowUpQuestions,
+  buildActionSteps,
   READING_TONES,
 });

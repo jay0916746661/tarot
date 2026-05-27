@@ -293,26 +293,26 @@ function CodexView() {
 // ───────────────────── ARCHIVE ─────────────────────
 function ArchiveView({ onNav }) {
   const [history, setHistory] = uS2(() => loadReadingHistory());
-  const entries = history.length ? history : HISTORY_FIXTURES;
+  const entries = history;
   const [activeId, setActiveId] = uS2(() => entries[0]?.id || null);
   const active = entries.find((entry) => entry.id === activeId) || entries[0];
 
   const mostDrawn = uM2(() => {
     const tally = {};
     history.forEach((entry) => entry.cards?.forEach((name) => { tally[name] = (tally[name] || 0) + 1; }));
-    return Object.entries(tally).sort((a, b) => b[1] - a[1])[0]?.[0] || '星星';
+    return Object.entries(tally).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
   }, [history]);
 
   const favoriteSpread = uM2(() => {
     const tally = {};
     history.forEach((entry) => { tally[entry.spread] = (tally[entry.spread] || 0) + 1; });
-    return Object.entries(tally).sort((a, b) => b[1] - a[1])[0]?.[0] || '時間三象';
+    return Object.entries(tally).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
   }, [history]);
 
   const handleDelete = (id) => {
     const next = deleteReadingHistory(id);
     setHistory(next);
-    setActiveId(next[0]?.id || HISTORY_FIXTURES[0]?.id || null);
+    setActiveId(next[0]?.id || null);
   };
 
   return (
@@ -324,7 +324,7 @@ function ArchiveView({ onNav }) {
           <div className="view-title-en">The chronicle of your inquiries</div>
         </div>
         <div className="view-header-meta">
-          <div>{history.length ? 'LOCAL ARCHIVE' : 'SAMPLE ARCHIVE'}</div>
+          <div>{history.length ? 'LOCAL ARCHIVE' : 'NO LOCAL RECORDS'}</div>
           <div>{entries.length} READINGS</div>
         </div>
       </header>
@@ -343,11 +343,19 @@ function ArchiveView({ onNav }) {
           <div className="archive-stat-label">FAVORITE SPREAD · 偏好牌陣</div>
         </div>
         <div className="archive-stat">
-          <div className="archive-stat-num">{history.length ? '本機' : '範例'}</div>
-          <div className="archive-stat-label">DAY STREAK · 連續天數</div>
+          <div className="archive-stat-num">本機</div>
+          <div className="archive-stat-label">SOURCE · 紀錄來源</div>
         </div>
       </div>
 
+      {!entries.length ? (
+        <div className="archive-empty">
+          <Eyebrow>EMPTY ARCHIVE</Eyebrow>
+          <h3>目前還沒有你的占卜紀錄</h3>
+          <p>新的占卜完成後會自動存到這裡，不需要另外按儲存。紀錄只保存在這台裝置的瀏覽器裡。</p>
+          <button className="btn-primary" onClick={() => onNav('spreads')}>開始一次占卜 →</button>
+        </div>
+      ) : (
       <div className="archive-layout">
         <div className="archive-timeline">
           <Eyebrow dim>TIMELINE · 時間軸</Eyebrow>
@@ -413,14 +421,13 @@ function ArchiveView({ onNav }) {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 32 }}>
                 <button className="btn-ghost" style={{ width: '100%' }} onClick={() => onNav('spreads')}>再問一次相似問題</button>
-                {history.length > 0 && (
-                  <button className="btn-ghost" style={{ width: '100%' }} onClick={() => handleDelete(active.id)}>從本機紀錄移除</button>
-                )}
+                <button className="btn-ghost" style={{ width: '100%' }} onClick={() => handleDelete(active.id)}>從本機紀錄移除</button>
               </div>
             </>
           )}
         </aside>
       </div>
+      )}
     </div>
   );
 }

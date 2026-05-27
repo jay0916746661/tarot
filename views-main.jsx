@@ -717,6 +717,8 @@ function ResultView({ result, onNav, onNew }) {
   // 靜態解讀（無 API Key 時的備用）
   const staticSynthesis = uM(() => buildHumanSynthesis(result), [result]);
   const followUps = uM(() => buildFollowUpQuestions(result), [result]);
+  const actionSteps = uM(() => buildActionSteps(result), [result]);
+  const savedResultRef = uR(null);
 
   // AI 解讀
   const [aiSynthesis, setAiSynthesis] = uS(null);
@@ -829,12 +831,24 @@ function ResultView({ result, onNav, onNew }) {
   const handleSave = () => {
     try {
       saveReadingHistory(result);
+      savedResultRef.current = result.ts;
       setSaveState('saved');
     } catch (err) {
       console.error(err);
       setSaveState('error');
     }
   };
+
+  uE(() => {
+    if (!result?.ts || savedResultRef.current === result.ts) return;
+    try {
+      saveReadingHistory(result);
+      savedResultRef.current = result.ts;
+      setSaveState('auto-saved');
+    } catch (err) {
+      console.error(err);
+    }
+  }, [result]);
 
   const handleShare = async () => {
     try {
@@ -908,6 +922,12 @@ function ResultView({ result, onNav, onNew }) {
           <Eyebrow>SYNTHESIS · 整體解讀 · ORACLE SPEAKS</Eyebrow>
         </div>
         <h3 className="ai-synthesis-title">當 牌 與 牌 相 遇</h3>
+        <div className="synthesis-quick-actions">
+          <button className="btn-ghost" onClick={handleSpeak}>
+            {isSpeaking ? '停止朗讀' : '懶人聽重點'}
+          </button>
+          <span>{availableVoices.find((voice) => voice.voiceURI === selectedVoiceURI)?.name || '使用系統中文語音'}</span>
+        </div>
         <div className="ai-synthesis-body">
           {isLoading ? (
             <p style={{ color: 'var(--gold)', fontFamily: 'var(--mono)', letterSpacing: '0.2em', fontSize: 13 }}>
@@ -918,6 +938,22 @@ function ResultView({ result, onNav, onNew }) {
               <p key={i} dangerouslySetInnerHTML={{ __html: p.replace(/\*(.+?)\*/g, '<em>$1</em>') }} />
             ))
           )}
+        </div>
+      </div>
+
+      <div className="action-plan-panel">
+        <div>
+          <Eyebrow>ACTION · 這 次 要 做 的 事</Eyebrow>
+          <div className="action-plan-title">不要只停在解讀，把牌落到生活裡</div>
+        </div>
+        <div className="action-plan-grid">
+          {actionSteps.map((step, i) => (
+            <div key={step.title} className="action-plan-card">
+              <div className="action-plan-num">{String(i + 1).padStart(2, '0')}</div>
+              <h4>{step.title}</h4>
+              <p>{step.body}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -1010,7 +1046,7 @@ function ResultView({ result, onNav, onNew }) {
       <div className="result-actions">
         <button className="btn-primary" onClick={onNew}>新的占卜 · New Reading</button>
         <button className="btn-ghost" onClick={handleSave}>
-          {saveState === 'saved' ? '已儲存至紀錄' : saveState === 'error' ? '儲存失敗' : '儲存至紀錄'}
+          {saveState === 'auto-saved' ? '已自動紀錄' : saveState === 'saved' ? '已儲存至紀錄' : saveState === 'error' ? '儲存失敗' : '儲存至紀錄'}
         </button>
         <button className="btn-ghost" onClick={() => onNav('archive')}>查看紀錄</button>
         <button className="btn-ghost" onClick={() => window.print()}>輸出 PDF</button>
