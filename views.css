@@ -440,6 +440,118 @@
 }
 
 /* ===== 牌陣選擇 ===== */
+.spread-guide-panel {
+  display: grid;
+  grid-template-columns: 0.78fr 1.22fr;
+  gap: 32px;
+  align-items: stretch;
+  margin-bottom: 36px;
+  padding: 28px;
+  background:
+    linear-gradient(135deg, color-mix(in oklch, var(--gold) 7%, transparent), transparent 42%),
+    color-mix(in oklch, var(--midnight) 88%, transparent);
+  border: 1px solid var(--line);
+  position: relative;
+  overflow: hidden;
+}
+.spread-guide-panel::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid var(--line-dim);
+  pointer-events: none;
+}
+.spread-guide-copy,
+.spread-guide-workspace {
+  position: relative;
+  z-index: 1;
+}
+.spread-guide-copy h3 {
+  font-family: var(--tc);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0.08em;
+  color: var(--parchment);
+  margin-top: 14px;
+}
+.spread-guide-copy p {
+  font-family: var(--tc);
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--mist);
+  margin-top: 16px;
+}
+.spread-guide-workspace {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.spread-guide-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+}
+.spread-guide-chip {
+  background: color-mix(in oklch, var(--void) 20%, transparent);
+  border: 1px solid var(--line);
+  color: var(--mist);
+  font-family: var(--tc);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.spread-guide-chip:hover,
+.spread-guide-chip.active {
+  color: var(--parchment);
+  border-color: var(--gold);
+  background: color-mix(in oklch, var(--gold) 8%, var(--midnight));
+}
+.spread-guide-result {
+  display: grid;
+  gap: 18px;
+  align-content: space-between;
+  min-height: 220px;
+  padding: 20px;
+  border: 1px solid var(--line-dim);
+  background: var(--midnight);
+}
+.spread-guide-kicker {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.spread-guide-name {
+  font-family: var(--tc);
+  font-size: 30px;
+  letter-spacing: 0.12em;
+  color: var(--parchment);
+  margin-top: 12px;
+}
+.spread-guide-result p {
+  font-family: var(--tc);
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--mist);
+  margin-top: 12px;
+}
+.spread-guide-alt {
+  font-family: var(--tc);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gold-soft);
+  margin-top: 14px;
+}
+.spread-guide-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .spreads-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -2101,6 +2213,29 @@
   .home-stat-num { font-size: 28px; }
 
   /* ── 牌陣選擇 ── */
+  .spread-guide-panel {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 20px 16px;
+    margin-bottom: 24px;
+  }
+  .spread-guide-copy h3 {
+    font-size: 22px;
+  }
+  .spread-guide-workspace {
+    grid-template-columns: 1fr;
+  }
+  .spread-guide-result {
+    min-height: auto;
+    padding: 16px;
+  }
+  .spread-guide-name {
+    font-size: 24px;
+  }
+  .spread-guide-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
   .spreads-grid { grid-template-columns: 1fr; }
   .spread-cell { min-height: auto; padding: 20px 16px; }
   .spread-cell-title { font-size: 22px; margin-top: 8px; }

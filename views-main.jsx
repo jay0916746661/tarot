@@ -129,8 +129,57 @@ function SpreadMini({ layout, count }) {
   );
 }
 
+const SPREAD_GUIDE_CHIPS = [
+  { id: 'quick', label: '只想要一句提醒', weights: { single: 5, three: 1 }, note: '你需要的是一個清楚的當下提示，不必把事情拆太深。' },
+  { id: 'trend', label: '想看接下來走向', weights: { three: 5, horseshoe: 2, celtic: 1 }, note: '你正在看時間線，適合用過去、現在、未來把脈絡接起來。' },
+  { id: 'choice', label: '正在做決定', weights: { situation: 5, horseshoe: 3, three: 1 }, note: '這題重點是局勢、行動和代價，適合用比較務實的牌陣。' },
+  { id: 'relationship', label: '跟某個人有關', weights: { relation: 5, situation: 2, celtic: 1 }, note: '關係題需要看兩個人的位置，也要看中間真正流動的是什麼。' },
+  { id: 'messy', label: '很多層糾在一起', weights: { celtic: 5, horseshoe: 3, relation: 1 }, note: '狀況已經不只一件事，深一點的牌陣會比較像把房間燈打開。' },
+  { id: 'hidden', label: '感覺有隱情', weights: { horseshoe: 5, celtic: 3, relation: 1 }, note: '你需要看見還沒浮上檯面的因素，而不是只問表面結果。' },
+  { id: 'repair', label: '想知道怎麼修復', weights: { situation: 4, relation: 3, three: 1 }, note: '修復題需要看現在能做什麼，答案要落在行動上。' },
+  { id: 'spiritual', label: '想深度整理自己', weights: { celtic: 4, horseshoe: 3, single: 1 }, note: '這比較像內在整理，不一定急著要結論，但需要完整看見。' },
+];
+
+function getSpreadRecommendation(selectedGuide) {
+  const scores = {};
+  const notes = [];
+  selectedGuide.forEach((id) => {
+    const chip = SPREAD_GUIDE_CHIPS.find((item) => item.id === id);
+    if (!chip) return;
+    notes.push(chip.note);
+    Object.entries(chip.weights).forEach(([spreadId, value]) => {
+      scores[spreadId] = (scores[spreadId] || 0) + value;
+    });
+  });
+  const ranked = SPREADS
+    .map((spread) => ({ spread, score: scores[spread.id] || 0 }))
+    .sort((a, b) => b.score - a.score || a.spread.count - b.spread.count);
+  const primary = ranked[0]?.score ? ranked[0].spread : SPREADS.find((s) => s.id === 'three');
+  const alternate = ranked.find((item) => item.spread.id !== primary.id && item.score > 0)?.spread
+    || SPREADS.find((s) => s.id === (primary.id === 'three' ? 'single' : 'three'));
+  return {
+    primary,
+    alternate,
+    reason: notes[0] || '如果還說不準，就先用三張牌看整體脈絡，通常最穩。',
+  };
+}
+
 function SpreadsView({ onNav, onSelectSpread }) {
   const [picked, setPicked] = uS(null);
+  const [selectedGuide, setSelectedGuide] = uS([]);
+  const recommendation = uM(() => getSpreadRecommendation(selectedGuide), [selectedGuide]);
+  const toggleGuide = (chipId) => {
+    setSelectedGuide((current) => (
+      current.includes(chipId)
+        ? current.filter((id) => id !== chipId)
+        : [...current, chipId].slice(-3)
+    ));
+  };
+  const startRecommended = (spread) => {
+    onSelectSpread(spread);
+    onNav('reading');
+  };
+
   return (
     <div className="view-container fade-in">
       <header className="view-header">
@@ -144,6 +193,44 @@ function SpreadsView({ onNav, onSelectSpread }) {
           <div>FROM 1 → 10 CARDS</div>
         </div>
       </header>
+
+      <div className="spread-guide-panel">
+        <div className="spread-guide-copy">
+          <Eyebrow>QUESTION GUIDE · 先 感 受 再 選 牌 陣</Eyebrow>
+          <h3>不知道該選哪一種，就先說你現在像什麼狀態</h3>
+          <p>選 1-3 個最貼近的詞，我會替你推薦牌陣。這比較接近真人占卜師先聽你描述，再決定要怎麼展牌。</p>
+        </div>
+        <div className="spread-guide-workspace">
+          <div className="spread-guide-chips">
+            {SPREAD_GUIDE_CHIPS.map((chip) => (
+              <button
+                key={chip.id}
+                type="button"
+                className={`spread-guide-chip ${selectedGuide.includes(chip.id) ? 'active' : ''}`}
+                onClick={() => toggleGuide(chip.id)}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+          <div className="spread-guide-result">
+            <div>
+              <div className="spread-guide-kicker">RECOMMENDED · {selectedGuide.length || 0} / 3</div>
+              <div className="spread-guide-name">{recommendation.primary.name}</div>
+              <p>{recommendation.reason}</p>
+              <div className="spread-guide-alt">也可以改看：{recommendation.alternate.name} · {recommendation.alternate.count} 張牌</div>
+            </div>
+            <div className="spread-guide-actions">
+              <button className="btn-primary" onClick={() => startRecommended(recommendation.primary)}>
+                用推薦牌陣開始 →
+              </button>
+              <button className="btn-ghost" onClick={() => startRecommended(recommendation.alternate)}>
+                改用替代牌陣
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="spreads-grid">
         {SPREADS.map((s, i) => (
