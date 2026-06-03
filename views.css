@@ -838,6 +838,86 @@
   line-height: 1.6;
   color: var(--mist);
 }
+.guided-question-panel {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-dim);
+}
+.guided-question-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+.guided-question-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.guided-question-head p {
+  font-family: var(--tc);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--mist);
+  margin-top: 8px;
+}
+.guided-question-count {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--gold-soft);
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+}
+.guided-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.guided-chip {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--mist);
+  font-family: var(--tc);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.guided-chip:hover,
+.guided-chip.active {
+  color: var(--parchment);
+  border-color: var(--gold);
+  background: color-mix(in oklch, var(--gold) 8%, transparent);
+}
+.guided-suggestion-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+.guided-suggestion {
+  text-align: left;
+  background: color-mix(in oklch, var(--void) 22%, transparent);
+  border: 1px solid var(--line-dim);
+  color: var(--mist);
+  font-family: var(--tc);
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.guided-suggestion:hover,
+.guided-suggestion.active {
+  color: var(--parchment);
+  border-color: var(--gold);
+  background: color-mix(in oklch, var(--gold) 5%, var(--midnight));
+}
 
 /* 洗牌動畫 */
 .shuffle-stage {
@@ -1309,6 +1389,74 @@
   margin-top: 12px;
 }
 
+.choice-path-panel {
+  display: grid;
+  grid-template-columns: 0.72fr 1.28fr;
+  gap: 32px;
+  align-items: start;
+  padding: 32px 0;
+  margin-bottom: 56px;
+  border-top: 1px solid var(--line-dim);
+  border-bottom: 1px solid var(--line-dim);
+}
+.choice-path-title {
+  font-family: var(--tc);
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  color: var(--parchment);
+  margin-top: 12px;
+}
+.choice-path-note {
+  font-family: var(--tc);
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--mist);
+  margin-top: 12px;
+}
+.choice-path-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line-dim);
+  border: 1px solid var(--line-dim);
+}
+.choice-path-card {
+  background:
+    linear-gradient(180deg, color-mix(in oklch, var(--midnight) 92%, transparent), var(--midnight));
+  padding: 22px;
+  min-height: 260px;
+}
+.choice-path-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--gold);
+}
+.choice-path-card h4 {
+  font-family: var(--tc);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--parchment);
+  margin-top: 14px;
+}
+.choice-path-card p {
+  font-family: var(--tc);
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--mist);
+  margin-top: 12px;
+}
+.choice-path-risk {
+  font-family: var(--tc);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--gold-soft);
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-dim);
+}
+
 /* 結果動作 */
 .result-actions {
   display: flex;
@@ -1398,6 +1546,15 @@
   color: var(--parchment);
   border-color: var(--gold);
   background: color-mix(in oklch, var(--gold) 6%, var(--midnight));
+}
+.followup-chip span {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+  margin-top: 8px;
+  text-transform: uppercase;
 }
 
 /* ===== 每日一牌 ===== */
@@ -1975,6 +2132,8 @@
   .voice-tools { align-items: stretch; gap: 8px; }
   .voice-tool-btn { flex: 1; padding: 9px 8px; }
   .voice-tool-status { min-width: 100%; font-size: 11px; }
+  .guided-question-head { flex-direction: column; gap: 10px; }
+  .guided-question-count { align-self: flex-start; }
   .question-suggestions { gap: 6px; margin-top: 16px; }
   .question-chip { font-size: 11px; padding: 7px 12px; }
   .question-cat-btn { min-width: 54px; padding: 8px 10px; }
@@ -2041,6 +2200,17 @@
     grid-template-columns: 1fr;
   }
   .action-plan-card { padding: 18px; }
+  .choice-path-panel {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 24px 0;
+    margin-bottom: 32px;
+  }
+  .choice-path-grid { grid-template-columns: 1fr; }
+  .choice-path-card {
+    min-height: auto;
+    padding: 18px;
+  }
 
   .result-actions { flex-wrap: wrap; gap: 10px; justify-content: center; }
   .voice-readout-panel {

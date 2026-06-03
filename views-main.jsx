@@ -245,13 +245,37 @@ const QUESTION_CATEGORIES = [
   },
 ];
 
+const PENDING_QUESTION_KEY = 'lumen_pending_question_v1';
+
+const GUIDE_CHIPS = [
+  { id: 'unclear', label: '很模糊', category: 'self', tone: 'gentle', prompt: '我現在說不清楚，但心裡一直卡住的事情是什麼？' },
+  { id: 'choice', label: '要做選擇', category: 'self', tone: 'practical', prompt: '面對這個選擇，我真正需要看清的代價是什麼？' },
+  { id: 'love_wait', label: '感情卡住', category: 'love', tone: 'gentle', prompt: '這段關係現在卡住的真正原因是什麼？' },
+  { id: 'need_action', label: '想知道下一步', category: 'self', tone: 'practical', prompt: '我現在最適合採取的第一個小行動是什麼？' },
+  { id: 'truth', label: '想聽真話', category: 'self', tone: 'direct', prompt: '這件事裡，我最不想承認但需要面對的真相是什麼？' },
+  { id: 'career_shift', label: '工作迷惘', category: 'career', tone: 'practical', prompt: '目前工作裡，我該繼續投入還是調整方向？' },
+  { id: 'anxiety', label: '很焦慮', category: 'wellness', tone: 'gentle', prompt: '我的焦慮真正想提醒我什麼？' },
+  { id: 'boundary', label: '界線問題', category: 'social', tone: 'direct', prompt: '這段互動裡，我需要重新設定什麼界線？' },
+];
+
+function loadPendingQuestion() {
+  try {
+    const pending = localStorage.getItem(PENDING_QUESTION_KEY) || '';
+    if (pending) localStorage.removeItem(PENDING_QUESTION_KEY);
+    return pending;
+  } catch (err) {
+    return '';
+  }
+}
+
 function ReadingView({ spread, onComplete, onNav }) {
   const [step, setStep] = uS(spread ? 'question' : 'no-spread');
-  const [question, setQuestion] = uS('');
+  const [question, setQuestion] = uS(loadPendingQuestion);
   const [drawn, setDrawn] = uS([]);
   const [picked, setPicked] = uS([]);
   const [revealedCards, setRevealedCards] = uS([]);
   const [selectedCat, setSelectedCat] = uS('self');
+  const [guidePicked, setGuidePicked] = uS([]);
   const [isListening, setIsListening] = uS(false);
   const [voiceStatus, setVoiceStatus] = uS('idle');
   const [readingTone, setReadingTone] = uS('gentle');
@@ -318,6 +342,26 @@ function ReadingView({ spread, onComplete, onNav }) {
     link.download = `lumen-inquiry-${new Date().toISOString().slice(0, 10)}.txt`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const guideSuggestions = uM(() => {
+    const pickedItems = guidePicked.map((id) => GUIDE_CHIPS.find((item) => item.id === id)).filter(Boolean);
+    const baseQuestions = QUESTION_CATEGORIES.find((c) => c.id === selectedCat)?.questions || [];
+    const prompts = pickedItems.map((item) => item.prompt);
+    return [...new Set([...prompts, ...baseQuestions])].slice(0, 3);
+  }, [guidePicked, selectedCat]);
+
+  const toggleGuideChip = (chip) => {
+    setGuidePicked((current) => {
+      const exists = current.includes(chip.id);
+      const next = exists ? current.filter((id) => id !== chip.id) : [...current, chip.id].slice(-3);
+      if (!exists) {
+        setSelectedCat(chip.category);
+        setReadingTone(chip.tone);
+        if (!question.trim()) setQuestion(chip.prompt);
+      }
+      return next;
+    });
   };
 
   const voiceStatusText = {
@@ -451,6 +495,39 @@ function ReadingView({ spread, onComplete, onNav }) {
                     下載文字檔
                   </button>
                   <span className="voice-tool-status">{voiceStatusText[voiceStatus]}</span>
+                </div>
+                <div className="guided-question-panel">
+                  <div className="guided-question-head">
+                    <div>
+                      <div className="guided-question-label">導引式提問 · AI QUESTION GUIDE</div>
+                      <p>先選 1-3 個現在最像你的狀態，我會幫你把問題整理成比較能被牌回應的句子。</p>
+                    </div>
+                    <div className="guided-question-count">{guidePicked.length} / 3</div>
+                  </div>
+                  <div className="guided-chip-list">
+                    {GUIDE_CHIPS.map((chip) => (
+                      <button
+                        key={chip.id}
+                        type="button"
+                        className={`guided-chip ${guidePicked.includes(chip.id) ? 'active' : ''}`}
+                        onClick={() => toggleGuideChip(chip)}
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="guided-suggestion-list">
+                    {guideSuggestions.map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        className={`guided-suggestion ${question === item ? 'active' : ''}`}
+                        onClick={() => setQuestion(item)}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="question-cat-panel">
@@ -718,6 +795,7 @@ function ResultView({ result, onNav, onNew }) {
   const staticSynthesis = uM(() => buildHumanSynthesis(result), [result]);
   const followUps = uM(() => buildFollowUpQuestions(result), [result]);
   const actionSteps = uM(() => buildActionSteps(result), [result]);
+  const choicePaths = uM(() => buildChoicePaths(result), [result]);
   const savedResultRef = uR(null);
 
   // AI 解讀
@@ -787,6 +865,8 @@ function ResultView({ result, onNav, onNew }) {
     `你的問題是：${question}`,
     `這次使用${spread.name}。`,
     ...synthesis.map((p) => p.replace(/\*(.+?)\*/g, '$1').replace(/<[^>]*>/g, '')),
+    `接下來有三條可能路線。`,
+    ...choicePaths.map((path) => `${path.title}：${path.body}${path.risk}`),
   ].join('\n\n');
 
   uE(() => {
@@ -864,6 +944,18 @@ function ResultView({ result, onNav, onNew }) {
         setSaveState('share-error');
       }
     }
+  };
+
+  const handleQueueFollowUp = async (item) => {
+    try {
+      localStorage.setItem(PENDING_QUESTION_KEY, item);
+      await navigator.clipboard?.writeText(item);
+    } catch (err) {
+      console.warn('Unable to queue follow-up question', err);
+    }
+    setSaveState('queued-question');
+    onNav('spreads');
+    window.scrollTo(0, 0);
   };
 
   const handleSpeak = () => {
@@ -957,6 +1049,26 @@ function ResultView({ result, onNav, onNew }) {
         </div>
       </div>
 
+      <div className="choice-path-panel">
+        <div>
+          <Eyebrow>RELATIVE PATHS · 相 對 可 能</Eyebrow>
+          <div className="choice-path-title">不是命定答案，而是三種走法</div>
+          <p className="choice-path-note">
+            同一副牌會因為你的行動而改變意義。這裡把它翻成三條路線，讓你比較哪一條最接近你真正想成為的狀態。
+          </p>
+        </div>
+        <div className="choice-path-grid">
+          {choicePaths.map((path) => (
+            <div key={path.tag} className="choice-path-card">
+              <div className="choice-path-tag">{path.tag}</div>
+              <h4>{path.title}</h4>
+              <p>{path.body}</p>
+              <div className="choice-path-risk">{path.risk}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div style={{ marginBottom: 56 }}>
         <Eyebrow>逐張解讀 · CARD BY CARD</Eyebrow>
         <div className="interpretation-grid" style={{ marginTop: 32 }}>
@@ -1032,12 +1144,10 @@ function ResultView({ result, onNav, onNew }) {
             <button
               key={item}
               className="followup-chip"
-              onClick={() => {
-                navigator.clipboard?.writeText(item);
-                setSaveState('copied-question');
-              }}
+              onClick={() => handleQueueFollowUp(item)}
             >
               {item}
+              <span>帶入下一次占卜 →</span>
             </button>
           ))}
         </div>
@@ -1051,7 +1161,7 @@ function ResultView({ result, onNav, onNew }) {
         <button className="btn-ghost" onClick={() => onNav('archive')}>查看紀錄</button>
         <button className="btn-ghost" onClick={() => window.print()}>輸出 PDF</button>
         <button className="btn-ghost" onClick={handleShare}>
-          {saveState === 'shared' ? '已複製 / 分享' : saveState === 'copied-question' ? '已複製追問' : saveState === 'share-error' ? '分享失敗' : '分享'}
+          {saveState === 'shared' ? '已複製 / 分享' : saveState === 'queued-question' ? '已帶入追問' : saveState === 'share-error' ? '分享失敗' : '分享'}
         </button>
       </div>
     </div>

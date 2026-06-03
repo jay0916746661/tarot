@@ -372,6 +372,45 @@ function buildActionSteps(result) {
   ];
 }
 
+function buildChoicePaths(result) {
+  const contextInfo = inferQuestionContext(result.question, result.category);
+  const ctx = QUESTION_CONTEXTS[contextInfo.category] || QUESTION_CONTEXTS.self;
+  const first = result.cards[0];
+  const middle = result.cards[Math.floor(result.cards.length / 2)] || first;
+  const last = result.cards[result.cards.length - 1] || first;
+  const firstLens = CARD_HUMAN_LENSES[first?.num] || CARD_HUMAN_LENSES[0];
+  const middleLens = CARD_HUMAN_LENSES[middle?.num] || CARD_HUMAN_LENSES[0];
+  const lastLens = CARD_HUMAN_LENSES[last?.num] || CARD_HUMAN_LENSES[0];
+  const intentLine = {
+    decision: '這題不是要你找唯一正解，而是看清每個選擇會換來什麼。',
+    action: '這題會因為你採取的第一個動作而改變，不是固定劇本。',
+    cause: '先改變反應模式，後面的走向才會跟著變。',
+    trend: '目前的趨勢只是現在這條路的延伸，不是命定結果。',
+    reflection: '你怎麼理解自己，會直接改變你接下來怎麼選。',
+  };
+
+  return [
+    {
+      tag: 'STAY',
+      title: '維持現狀',
+      body: `如果你先不改變，${first?.name || '第一張牌'}提醒的是：${firstLens.core}${first?.isReversed ? firstLens.reversed : firstLens.upright} 放在「${ctx.label}」裡看，這條路會讓你更清楚自己到底在撐什麼。`,
+      risk: `風險：${firstLens.watch}`,
+    },
+    {
+      tag: 'ACT',
+      title: '主動推進',
+      body: `如果你願意做一個明確動作，${middle?.name || '中間牌'}給的方向是：${middleLens.action} ${intentLine[contextInfo.intent] || intentLine.reflection}`,
+      risk: `風險：行動太大會失焦，先讓下一步小到今天能完成。`,
+    },
+    {
+      tag: 'PAUSE',
+      title: '暫停調整',
+      body: `如果你先停一下，${last?.name || '最後一張牌'}比較像在說：${lastLens.core}${last?.isReversed ? lastLens.reversed : lastLens.upright} 這不是退縮，是把節奏拿回來。`,
+      risk: `風險：${lastLens.watch}`,
+    },
+  ];
+}
+
 const HISTORY_FIXTURES = [
   { id: 'h7', date: '2026.04.23', time: '23:14', spread: '凱爾特十字', question: '我該接受這個工作機會嗎？', cards: ['命運之輪', '高塔', '星星'], mood: '焦慮 → 釋然', summary: '輪轉已啟動，舊結構崩塌正是新生開始。' },
   { id: 'h6', date: '2026.04.21', time: '08:02', spread: '時間三象', question: '與 J 的關係將走向何處？', cards: ['戀人', '吊人', '太陽'], mood: '困惑', summary: '需要從不同角度看待，光明終將降臨。' },
@@ -464,5 +503,6 @@ Object.assign(window, {
   buildHumanSynthesis,
   buildFollowUpQuestions,
   buildActionSteps,
+  buildChoicePaths,
   READING_TONES,
 });
