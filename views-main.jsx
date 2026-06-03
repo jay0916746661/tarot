@@ -880,6 +880,7 @@ function ResultView({ result, onNav, onNew }) {
 
   // 靜態解讀（無 API Key 時的備用）
   const staticSynthesis = uM(() => buildHumanSynthesis(result), [result]);
+  const questionMirror = uM(() => buildQuestionMirror(result), [result]);
   const followUps = uM(() => buildFollowUpQuestions(result), [result]);
   const actionSteps = uM(() => buildActionSteps(result), [result]);
   const choicePaths = uM(() => buildChoicePaths(result), [result]);
@@ -909,12 +910,12 @@ function ResultView({ result, onNav, onNew }) {
       `【抽到的牌】\n${cardLines}\n\n` +
       `請寫 5 段解讀（每段 70-110 字），用繁體中文，像真人塔羅師口語說明，` +
       `但每段都必須具體回應「${question}」這個問題：\n` +
-      `第1段：先判斷這個問題真正想問的是什麼，不要只講牌義\n` +
-      `第2段：第一張牌如何貼到使用者的現況\n` +
-      `第3段：中間牌的能量流動（單張牌陣則深入探討這張牌）\n` +
-      `第4段：最後一張牌的指引方向\n` +
-      `第5段：給出非常具體、可執行、像人會說的建議\n\n` +
-      `請避免教科書式牌義，不要說空泛的「宇宙能量」，直接輸出5段文字，段落間空一行，不加標題或符號。`;
+      `第1段：先把這個問題翻成白話，說明使用者真正想確認的是什麼\n` +
+      `第2段：第一張牌如何貼到使用者的現況，必須引用問題中的人、事或選擇\n` +
+      `第3段：中間牌的能量流動（單張牌陣則深入探討這張牌），要說明現況如何形成\n` +
+      `第4段：最後一張牌的指引方向，要說清楚如果照目前做法會怎麼走\n` +
+      `第5段：給出非常具體、可執行、像人會說的建議，包含今天可以做的一件事\n\n` +
+      `請避免教科書式牌義，不要說空泛的「宇宙能量」，不要只列關鍵字。每段至少一次回扣使用者問題的具體情境，直接輸出5段文字，段落間空一行，不加標題或符號。`;
 
     fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -1092,6 +1093,22 @@ function ResultView({ result, onNav, onNew }) {
       <div className="spread-canvas">
         <div className="spread-canvas-inner" style={{ minHeight: spread.layout === 'celtic' ? 640 : 480 }}>
           <PositionPlacement result={result} />
+        </div>
+      </div>
+
+      <div className="question-mirror-panel">
+        <div>
+          <Eyebrow>QUESTION MIRROR · 先 把 問 題 看 準</Eyebrow>
+          <div className="question-mirror-title">這次不是先講牌義，而是先確認你真正想問什麼</div>
+        </div>
+        <div className="question-mirror-grid">
+          {questionMirror.map((item, i) => (
+            <div key={item.title} className="question-mirror-card">
+              <div className="question-mirror-num">{String(i + 1).padStart(2, '0')}</div>
+              <h4>{item.title}</h4>
+              <p>{item.body}</p>
+            </div>
+          ))}
         </div>
       </div>
 

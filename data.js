@@ -249,6 +249,62 @@ function inferQuestionContext(question, explicitCategory) {
   };
 }
 
+function describeQuestionFocus(question, contextInfo) {
+  const q = (question || '').trim();
+  const hasPerson = /(他|她|對方|伴侶|前任|喜歡的人|曖昧|主管|同事|朋友|家人|客戶|J)/i.test(q);
+  const hasChoice = /(該不該|要不要|是否|繼續|離開|接受|拒絕|轉職|分手|復合|選哪|決定)/i.test(q);
+  const hasTiming = /(什麼時候|多久|近期|今年|下個月|未來|三個月|接下來)/i.test(q);
+  const hasFeeling = /(焦慮|害怕|不安|難過|累|煩|迷惘|卡住|放不下|委屈|生氣)/i.test(q);
+  const hasOutcome = /(結果|走向|會不會|能不能|成不成|成功|失敗|發展)/i.test(q);
+  const ctx = QUESTION_CONTEXTS[contextInfo.category] || QUESTION_CONTEXTS.self;
+
+  const categoryFocus = {
+    love: hasPerson
+      ? '你真正想知道的不是一句「對方怎麼想」，而是這段互動還值不值得你繼續投入情緒。'
+      : '這題的核心是你的關係需求、界線，以及你願意如何被對待。',
+    career: '你真正想看的不是工作好不好，而是這個選擇有沒有讓你的能力、時間和安全感放在同一個方向。',
+    wealth: '這題表面在問錢，實際是在問風險、安全感，以及你能不能承受某個決定的波動。',
+    wellness: '這題不是要你硬找答案，而是看身體和情緒已經替你累積了哪些訊號。',
+    social: '這題真正要看的，是你在這段互動裡的位置、距離和界線是不是已經失衡。',
+    self: '這題真正要看的，是你現在卡住的模式，以及你其實已經知道卻還沒承認的那句話。',
+  };
+
+  const intentFocus = {
+    decision: hasChoice
+      ? '牌不會替你做決定，它會把「繼續」和「改變」各自的代價攤開。'
+      : '這題需要先分辨你是在想選擇，還是在等別人替你保證。',
+    action: '這次解讀會把重點收斂到下一步，不讓答案只停在感覺。',
+    cause: '這次要看的不是誰對誰錯，而是為什麼同一種卡住感一直重複。',
+    trend: hasTiming || hasOutcome
+      ? '牌會看目前節奏延伸出去的趨勢，但不把它當成不能改變的命運。'
+      : '這次會看事情正在往哪裡流動，以及哪個地方一改，走向就會不一樣。',
+    reflection: '這次更像照鏡子：先看清你現在的位置，再談下一步。',
+  };
+
+  const caution = hasFeeling
+    ? '因為問題裡有強烈情緒，這次要特別分清楚：哪些是直覺，哪些只是焦慮在替你下結論。'
+    : hasPerson
+      ? '因為問題牽涉到別人，這次不會把對方講成唯一答案，也會看你自己的位置。'
+      : '這次先不追求一句絕對答案，而是把可行方向和需要避開的盲點講清楚。';
+
+  return {
+    core: categoryFocus[contextInfo.category] || categoryFocus.self,
+    method: intentFocus[contextInfo.intent] || intentFocus.reflection,
+    caution,
+    anchor: `${ctx.label}／${contextInfo.intentLabel}`,
+  };
+}
+
+function buildQuestionMirror(result) {
+  const contextInfo = inferQuestionContext(result.question, result.category);
+  const focus = describeQuestionFocus(result.question, contextInfo);
+  return [
+    { title: '真正問題', body: focus.core },
+    { title: '這次看法', body: focus.method },
+    { title: '要避開的誤讀', body: focus.caution },
+  ];
+}
+
 function getPositionTone(positionName, intent) {
   const pos = positionName || '此刻';
   if (/過去|根基|隱情|核心/.test(pos)) return '先看這件事背後真正的成因';
@@ -266,6 +322,7 @@ function getPositionTone(positionName, intent) {
 function buildHumanCardReading(card, position, question, contextInfo) {
   const lens = CARD_HUMAN_LENSES[card.num] || CARD_HUMAN_LENSES[0];
   const ctx = QUESTION_CONTEXTS[contextInfo.category] || QUESTION_CONTEXTS.self;
+  const focus = describeQuestionFocus(question, contextInfo);
   const orientation = card.isReversed ? lens.reversed : lens.upright;
   const tone = getPositionTone(position?.name, contextInfo.intent);
   const bridge = contextInfo.intent === 'decision'
@@ -276,7 +333,7 @@ function buildHumanCardReading(card, position, question, contextInfo) {
         ? '所以真正的原因可能不在表面事件，而在你一直重複的反應模式。'
         : '所以它給你的不是預言，而是一個更貼近現況的提醒。';
 
-  return `在「${position?.name || '此刻'}」這個位置，${card.name}${card.isReversed ? '逆位' : '正位'}${tone}。針對「${question}」，我會把它翻成比較白話的說法：${lens.core}${orientation} 放到${ctx.field}裡看，${ctx.plain}${bridge} 你現在可以做的是：${lens.action} 但要小心：${lens.watch}`;
+  return `在「${position?.name || '此刻'}」這個位置，${card.name}${card.isReversed ? '逆位' : '正位'}${tone}。針對「${question}」，我會先把焦點放在「${focus.anchor}」：${focus.core} 這張牌翻成白話是：${lens.core}${orientation} 放到${ctx.field}裡看，${ctx.plain}${bridge} 你現在可以做的是：${lens.action} 但要小心：${lens.watch}`;
 }
 
 function buildHumanSynthesis(result) {
@@ -284,16 +341,17 @@ function buildHumanSynthesis(result) {
   const contextInfo = inferQuestionContext(question, category);
   const ctx = QUESTION_CONTEXTS[contextInfo.category] || QUESTION_CONTEXTS.self;
   const tone = READING_TONES[readingTone] || READING_TONES.gentle;
+  const focus = describeQuestionFocus(question, contextInfo);
   const reversedCount = cards.filter((c) => c.isReversed).length;
   const first = cards[0];
   const last = cards[cards.length - 1];
   const firstLens = CARD_HUMAN_LENSES[first.num] || CARD_HUMAN_LENSES[0];
   const lastLens = CARD_HUMAN_LENSES[last.num] || CARD_HUMAN_LENSES[0];
 
-  const opening = `${tone.lead} 你這題我會先放在「${ctx.label}」來看，而且它比較像是在問「${contextInfo.intentLabel}」。所以我不會只說${first.name}代表什麼，而是直接回到你的問題：「${question}」。${ctx.plain}`;
-  const core = `整個牌陣的核心語氣是：${firstLens.core}${first.isReversed ? firstLens.reversed : firstLens.upright} 這表示你現在最需要看見的，不是標準答案，而是你在這件事裡一直重複的姿態。`;
+  const opening = `${tone.lead} 你這題我會先放在「${focus.anchor}」來看。也就是說，我不會只說${first.name}代表什麼，而是先回到你的問題：「${question}」。${focus.core}`;
+  const core = `整個牌陣的核心語氣是：${firstLens.core}${first.isReversed ? firstLens.reversed : firstLens.upright} ${focus.method} 所以你現在最需要看見的，不是標準答案，而是你在這件事裡一直重複的姿態。`;
   const flow = cards.length > 1
-    ? `中間幾張牌把細節攤開：${cards.slice(1, -1).map((card, idx) => `「${card.name}」在${spread.positions[idx + 1].name}`).join('、') || '這是一張牌的直接回應'}。${reversedCount ? `有 ${reversedCount} 張逆位，代表有些能量不是不能動，而是還卡在心裡、關係裡或習慣裡。` : '幾乎都是正位，代表事情已經很清楚，真正差的是行動和承認。'}`
+    ? `中間幾張牌把細節攤開：${cards.slice(1, -1).map((card, idx) => `「${card.name}」在${spread.positions[idx + 1].name}`).join('、') || '這是一張牌的直接回應'}。${reversedCount ? `有 ${reversedCount} 張逆位，代表有些能量不是不能動，而是還卡在心裡、關係裡或習慣裡。` : '幾乎都是正位，代表事情已經很清楚，真正差的是行動和承認。'} ${focus.caution}`
     : `${first.name}單獨出現時，訊息很集中：它不是叫你把事情想得更玄，而是要你看清楚現在最該面對的那一點。`;
   const advice = `最後用「${last.name}」收束，我會給你一句比較像真人會說的建議：${lastLens.action} ${last.isReversed ? '先不要逼自己立刻有漂亮答案，逆位比較像在說：你要先把卡住的地方鬆開。' : '如果你照這個方向走，事情不一定立刻完美，但會更接近你的真實狀態。'}`;
   const close = `總結來說，這副牌不是在替你決定命運，而是在提醒你：${ctx.action} ${tone.advice} 你可以把這次解讀當成一段對話，而不是判決。`;
@@ -344,6 +402,7 @@ function buildFollowUpQuestions(result) {
 function buildActionSteps(result) {
   const contextInfo = inferQuestionContext(result.question, result.category);
   const ctx = QUESTION_CONTEXTS[contextInfo.category] || QUESTION_CONTEXTS.self;
+  const focus = describeQuestionFocus(result.question, contextInfo);
   const first = result.cards[0];
   const last = result.cards[result.cards.length - 1];
   const firstLens = CARD_HUMAN_LENSES[first?.num] || CARD_HUMAN_LENSES[0];
@@ -359,7 +418,7 @@ function buildActionSteps(result) {
   return [
     {
       title: '先穩住',
-      body: `${ctx.action} ${firstLens.action}`,
+      body: `${focus.caution} ${ctx.action} ${firstLens.action}`,
     },
     {
       title: '再看清楚',
@@ -375,6 +434,7 @@ function buildActionSteps(result) {
 function buildChoicePaths(result) {
   const contextInfo = inferQuestionContext(result.question, result.category);
   const ctx = QUESTION_CONTEXTS[contextInfo.category] || QUESTION_CONTEXTS.self;
+  const focus = describeQuestionFocus(result.question, contextInfo);
   const first = result.cards[0];
   const middle = result.cards[Math.floor(result.cards.length / 2)] || first;
   const last = result.cards[result.cards.length - 1] || first;
@@ -393,13 +453,13 @@ function buildChoicePaths(result) {
     {
       tag: 'STAY',
       title: '維持現狀',
-      body: `如果你先不改變，${first?.name || '第一張牌'}提醒的是：${firstLens.core}${first?.isReversed ? firstLens.reversed : firstLens.upright} 放在「${ctx.label}」裡看，這條路會讓你更清楚自己到底在撐什麼。`,
+      body: `如果你先不改變，${first?.name || '第一張牌'}提醒的是：${firstLens.core}${first?.isReversed ? firstLens.reversed : firstLens.upright} 放在「${focus.anchor}」裡看，這條路會讓你更清楚自己到底在撐什麼。`,
       risk: `風險：${firstLens.watch}`,
     },
     {
       tag: 'ACT',
       title: '主動推進',
-      body: `如果你願意做一個明確動作，${middle?.name || '中間牌'}給的方向是：${middleLens.action} ${intentLine[contextInfo.intent] || intentLine.reflection}`,
+      body: `如果你願意做一個明確動作，${middle?.name || '中間牌'}給的方向是：${middleLens.action} ${focus.method} ${intentLine[contextInfo.intent] || intentLine.reflection}`,
       risk: `風險：行動太大會失焦，先讓下一步小到今天能完成。`,
     },
     {
@@ -429,8 +489,9 @@ function formatReadingDate(ts) {
 function summarizeReading(result) {
   const first = result.cards[0];
   const contextInfo = inferQuestionContext(result.question, result.category);
+  const focus = describeQuestionFocus(result.question, contextInfo);
   const lens = CARD_HUMAN_LENSES[first?.num] || CARD_HUMAN_LENSES[0];
-  return `這題偏向「${contextInfo.label}／${contextInfo.intentLabel}」。${first?.name || '這張牌'}提醒你：${lens.core}${first?.isReversed ? lens.reversed : lens.upright} 下一步可以先做：${lens.action}`;
+  return `這題偏向「${focus.anchor}」。${focus.core} ${first?.name || '這張牌'}提醒你：${lens.core}${first?.isReversed ? lens.reversed : lens.upright} 下一步可以先做：${lens.action}`;
 }
 
 function resultToHistoryEntry(result) {
@@ -499,6 +560,8 @@ Object.assign(window, {
   deleteReadingHistory,
   resultToHistoryEntry,
   inferQuestionContext,
+  describeQuestionFocus,
+  buildQuestionMirror,
   buildHumanCardReading,
   buildHumanSynthesis,
   buildFollowUpQuestions,
