@@ -9,52 +9,55 @@ function HomeView({ onNav }) {
   const [feature, setFeature] = uS(null);
   uE(() => { setFeature(getDailyCard()); }, []);
   const time = useClock();
+  const quickActions = [
+    { title: '不知道怎麼問', body: '先用狀態詞推薦牌陣，再幫你整理問題。', action: '用導引開始', nav: 'spreads', primary: true },
+    { title: '已經有問題', body: '直接選牌陣、輸入問題、抽牌看結果。', action: '直接占卜', nav: 'spreads' },
+    { title: '只想看今天', body: '抽一張今日提醒，不需要完整流程。', action: '今日之牌', nav: 'daily' },
+  ];
 
   return (
     <div className="view-container fade-in">
-      <div className="home-hero">
+      <div className="home-hero home-hero-simple">
         <div>
-          <div className="home-eyebrow">
-            <span className="home-eyebrow-line" />
-            <Eyebrow>EST · 2026 · TAIPEI · MMXXVI</Eyebrow>
+          <div className="home-start-mark">
+            <Eyebrow>靈樞 Lumen Arcana · {time} TPE</Eyebrow>
           </div>
-          <h1 className="home-title-tc">靈<span className="accent">·</span>樞</h1>
-          <div className="home-title-en"><em>Lumen</em> Arcana</div>
-          <p className="home-quote">
-            一副牌，一個問題，一束從你內心折射出的光——<br/>
-            塔羅不告訴你未來，它讓你看見自己。
+          <h1 className="home-title-tc home-title-clear">今天想問什麼？</h1>
+          <p className="home-quote home-quote-clear">
+            選一個入口就能開始。問題還不清楚也沒關係，我會先幫你整理成適合占卜的問法。
           </p>
           <div className="home-actions">
             <button className="btn-primary" onClick={() => onNav('spreads')}>
-              開始一次占卜 · Begin →
+              開始占卜 →
             </button>
             <button className="btn-ghost" onClick={() => onNav('daily')}>
               今日之牌
             </button>
-            <span className="home-actions-meta">{time} · TPE</span>
           </div>
 
-          <div className="home-stats">
-            <div className="home-stat">
-              <div className="home-stat-num">78</div>
-              <div className="home-stat-label">CARDS</div>
-              <div className="home-stat-tc">完整牌庫</div>
-            </div>
-            <div className="home-stat">
-              <div className="home-stat-num">06</div>
-              <div className="home-stat-label">SPREADS</div>
-              <div className="home-stat-tc">經典牌陣</div>
-            </div>
-            <div className="home-stat">
-              <div className="home-stat-num">24</div>
-              <div className="home-stat-label">SESSIONS</div>
-              <div className="home-stat-tc">本月占卜</div>
-            </div>
-            <div className="home-stat">
-              <div className="home-stat-num">∞</div>
-              <div className="home-stat-label">INSIGHTS</div>
-              <div className="home-stat-tc">無盡啟示</div>
-            </div>
+          <div className="home-quick-grid">
+            {quickActions.map((item, i) => (
+              <button
+                key={item.title}
+                className={`home-quick-card ${item.primary ? 'primary' : ''}`}
+                type="button"
+                onClick={() => onNav(item.nav)}
+              >
+                <span className="home-quick-num">{String(i + 1).padStart(2, '0')}</span>
+                <strong>{item.title}</strong>
+                <span>{item.body}</span>
+                <em>{item.action} →</em>
+              </button>
+            ))}
+          </div>
+
+          <div className="home-flow">
+            {['選入口', '輸入或語音提問', '抽牌看解讀'].map((step, i) => (
+              <div key={step} className="home-flow-step">
+                <span>{i + 1}</span>
+                {step}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -65,32 +68,9 @@ function HomeView({ onNav }) {
           <div className="home-altar-card">
             {feature && <TarotCard card={feature} reversed={feature.reversed} size="xl" />}
           </div>
-        </div>
-      </div>
-
-      <div style={{ marginTop: 80 }}>
-        <Eyebrow>本月召喚 · THIS MOON CYCLE</Eyebrow>
-        <div style={{
-          marginTop: 32,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 1,
-          background: 'var(--line-dim)',
-          border: '1px solid var(--line-dim)',
-        }}>
-          {[
-            { tc: '提問之術', en: 'The Art of Asking', body: '一個好問題比答案珍貴。學習如何向牌堆發問。', tag: 'GUIDE' },
-            { tc: '逆位之意', en: 'On Reversals', body: '逆位不是壞牌——它是同一能量的內向版本。', tag: 'STUDY' },
-            { tc: '元素對話', en: 'Elemental Dialog', body: '火、水、風、土在你的牌陣中如何對話？', tag: 'DEEP' },
-          ].map((it, i) => (
-            <div key={i} style={{ background: 'var(--midnight)', padding: 32, cursor: 'pointer' }} onClick={() => onNav('codex')}>
-              <Eyebrow>{it.tag}</Eyebrow>
-              <div style={{ fontFamily: 'var(--tc)', fontSize: 24, marginTop: 16, letterSpacing: '0.1em', color: 'var(--parchment)' }}>{it.tc}</div>
-              <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 16, color: 'var(--gold)', marginTop: 4 }}>{it.en}</div>
-              <div style={{ fontFamily: 'var(--tc)', fontSize: 14, lineHeight: 1.8, color: 'var(--mist)', marginTop: 20 }}>{it.body}</div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--gold)', letterSpacing: '0.25em', marginTop: 32 }}>READ →</div>
-            </div>
-          ))}
+          <button className="home-daily-shortcut" type="button" onClick={() => onNav('daily')}>
+            今日之牌 · {feature?.name || '抽一張'} →
+          </button>
         </div>
       </div>
     </div>
